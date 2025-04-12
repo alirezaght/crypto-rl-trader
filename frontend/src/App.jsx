@@ -6,10 +6,8 @@ import {
   Button,
   Text,
   VStack,
-  Code,
   ChakraProvider,
   Divider,
-  Spinner,
   SimpleGrid,
 } from '@chakra-ui/react'
 import { initializeApp } from 'firebase/app'
