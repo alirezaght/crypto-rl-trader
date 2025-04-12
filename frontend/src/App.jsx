@@ -9,6 +9,8 @@ import {
   Code,
   ChakraProvider,
   Divider,
+  Spinner,
+  SimpleGrid,
 } from '@chakra-ui/react'
 import { initializeApp } from 'firebase/app'
 import {
@@ -51,24 +53,30 @@ export default function App() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [isLogin, setIsLogin] = useState(true)
-  const [apiResponse, setApiResponse] = useState(null)
+  const [config, setConfig] = useState(null)
+  const [predictions, setPredictions] = useState({})
 
   useEffect(() => {
-    return onAuthStateChanged(auth, (user) => {
+    return onAuthStateChanged(auth, async (user) => {
       setUser(user)
-      setApiResponse(null)
+      setPredictions({})
+      if (user) {
+        const token = await user.getIdToken()
+        const res = await fetch('https://tradepulse-api-327272059000.europe-west1.run.app/config', {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        const cfg = await res.json()
+        setConfig(cfg)
+      }
     })
   }, [])
 
   const handleAuth = async () => {
     try {
       setLoading(true)
-      if (isLogin) {
-        await signInWithEmailAndPassword(auth, email, password)
-      } else {
-        const result = await createUserWithEmailAndPassword(auth, email, password)
-        await fetchPrediction(result.user)
-      }
+      isLogin
+        ? await signInWithEmailAndPassword(auth, email, password)
+        : await createUserWithEmailAndPassword(auth, email, password)
     } catch (err) {
       alert(err.message)
     } finally {
@@ -79,8 +87,7 @@ export default function App() {
   const handleGoogleLogin = async () => {
     try {
       setLoading(true)
-      const result = await signInWithPopup(auth, googleProvider)
-      await fetchPrediction(result.user)
+      await signInWithPopup(auth, googleProvider)
     } catch (err) {
       alert(`Google login failed: ${err.message}`)
     } finally {
@@ -88,19 +95,18 @@ export default function App() {
     }
   }
 
-  const fetchPrediction = async (firebaseUser = user) => {
+  const fetchPrediction = async (symbol) => {
+    if (!user) return
     try {
       setLoading(true)
-      const token = await firebaseUser.getIdToken()
-      const response = await fetch(`https://tradepulse-api-327272059000.europe-west1.run.app/predict?symbol=BTC/USD`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      const token = await user.getIdToken()
+      const res = await fetch(`https://tradepulse-api-327272059000.europe-west1.run.app/predict?symbol=${encodeURIComponent(symbol)}`, {
+        headers: { Authorization: `Bearer ${token}` },
       })
-      const data = await response.json()
-      setApiResponse(data)
+      const data = await res.json()
+      setPredictions((prev) => ({ ...prev, [symbol]: data.action }))
     } catch (err) {
-      setApiResponse({ error: err.message })
+      alert(`Error fetching prediction: ${err.message}`)
     } finally {
       setLoading(false)
     }
@@ -109,26 +115,39 @@ export default function App() {
   return (
     <ChakraProvider>
       <Box minH="100vh" bg="gray.50" p={6} display="flex" alignItems="center" justifyContent="center">
-        <Box bg="white" p={8} rounded="xl" shadow="xl" maxW="lg" w="full">
+        <Box bg="white" p={8} rounded="xl" shadow="xl" maxW="xl" w="full">
           <VStack spacing={4} align="stretch">
             <Heading size="lg" textAlign="center">📈 TradePulse</Heading>
 
             {user ? (
               <>
                 <Text textAlign="center">Logged in as <strong>{user.email}</strong></Text>
-                <Button colorScheme="blue" onClick={() => fetchPrediction()} isLoading={loading}>
-                  Get Prediction
-                </Button>
-                {apiResponse && (
-                  <Box bg="gray.100" p={4} rounded="md">
-                    <Text fontSize="sm" mb={1}>API Response:</Text>
-                    <Code p={2} fontSize="sm">{JSON.stringify(apiResponse, null, 2)}</Code>
-                    {typeof apiResponse.action === 'number' && (
-                      <Text fontWeight="bold" mt={2}>{actionMap[apiResponse.action]}</Text>
-                    )}
-                  </Box>
+
+                {config && (
+                  <>
+                    <Text fontSize="sm">⏱ Interval: <strong>{config.interval}</strong></Text>
+                    <Text fontSize="sm">📆 Window Days: <strong>{config.window_days}</strong></Text>
+                    <Text fontSize="sm">🔮 Predict Days: <strong>{config.predict_days}</strong></Text>
+                    <Divider />
+
+                    <SimpleGrid columns={[1, 2]} spacing={4}>
+                      {config.pairs.map((pair) => (
+                        <Box key={pair}>
+                          <Button colorScheme="blue" size="sm" onClick={() => fetchPrediction(pair)}>
+                            Predict {pair}
+                          </Button>
+                          {predictions[pair] !== undefined && (
+                            <Text mt={2}>{actionMap[predictions[pair]]}</Text>
+                          )}
+                        </Box>
+                      ))}
+                    </SimpleGrid>
+                  </>
                 )}
-                <Button variant="link" colorScheme="red" onClick={() => signOut(auth)}>Sign out</Button>
+
+                <Button mt={4} variant="link" colorScheme="red" onClick={() => signOut(auth)}>
+                  Sign out
+                </Button>
               </>
             ) : (
               <>
@@ -137,12 +156,10 @@ export default function App() {
                 <Button colorScheme="blue" onClick={handleAuth} isLoading={loading}>
                   {isLogin ? "Login" : "Sign Up"}
                 </Button>
-
                 <Divider />
                 <Button colorScheme="green" onClick={handleGoogleLogin} isLoading={loading}>
                   Continue with Google
                 </Button>
-
                 <Button variant="link" onClick={() => setIsLogin(!isLogin)}>
                   {isLogin ? "New here? Create an account" : "Already have an account? Login"}
                 </Button>
