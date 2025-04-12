@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+    paths:
+      - '**'
+      - '!frontend/**'  # ❌ ignore all changes in frontend/
 
 jobs:
   deploy:
@@ -32,7 +35,7 @@ jobs:
           --source . \
           --region ${{ secrets.REGION }} \
           --platform managed \
-          --no-allow-unauthenticated \
+          --allow-unauthenticated \
           --port 8000 \
           --memory 1Gi
 
