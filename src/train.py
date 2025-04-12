@@ -2,33 +2,45 @@ from stable_baselines3 import PPO
 from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize
 import numpy as np
 from crypto_env import CryptoPredictionEnv
-import os
 import matplotlib.pyplot as plt
 from utils import get_candle_count, fetch_data
 import datetime
-
+from storage import download_from_gcs, gcs_file_exists, upload_to_gcs
 
 class CryptoTrainer:
-    def __init__(self, symbol="BTCUSDT", interval="4h", days=90, predict_days = 30):
+    def __init__(self, symbol="BTCUSDT", interval="4h", days=90, predict_days = 30, train=True):
         self.symbol = symbol
         self.interval = interval
         self.days = days
         self.window_size = get_candle_count(days, interval)
         self.predict_horizon = get_candle_count(predict_days, interval)
-        self.file_name = f"{symbol}_{days}_{predict_days}_{interval}"        
-        if not (os.path.exists(f"vec_{self.file_name}.pkl") and os.path.exists(f"{self.file_name}.zip")):
+        self.file_name = f"{symbol}_{days}_{predict_days}_{interval}".replace("/", "_")
+        self.train = train  
+        self.model_path = f"/tmp/{self.file_name}.zip"
+        self.vec_path = f"/tmp/vec_{self.file_name}.pkl"      
+        model_exists = gcs_file_exists(f"models/{self.file_name}.zip") and gcs_file_exists(f"models/vec_{self.file_name}.pkl")
+
+        if not model_exists:
+            if not train:
+                raise FileNotFoundError(f"Model files for {self.file_name} not found.")
             print(f"Training model for {self.symbol}")
-            df = fetch_data(symbol=symbol, interval=interval, lookback_days=500)
+            df = fetch_data(symbol=symbol, interval=interval)
             df = df.drop(columns=["timestamp"])
             env = CryptoPredictionEnv(df=df, window_size=self.window_size, prediction_horizon=self.predict_horizon)
             vec_env = DummyVecEnv([lambda: env])
             vec_env = VecNormalize(vec_env, norm_obs=True, norm_reward=True, clip_reward=1.0)
             model = PPO("MlpPolicy", vec_env, verbose=1)
             model.learn(total_timesteps=200_000)
-            model.save(self.file_name)
-            vec_env.save(f"vec_{self.file_name}.pkl")
+            model.save(self.model_path)
+            vec_env.save(self.vec_path)
+            
+            upload_to_gcs(self.model_path, f"models/{self.file_name}.zip")
+            upload_to_gcs(self.vec_path, f"models/vec_{self.file_name}.pkl")
         else:
-            print(f"Model exists for {self.symbol}.")
+            print(f"Model exists for {self.symbol}. Downloading...")
+            download_from_gcs(f"models/{self.file_name}.zip", self.model_path)
+            download_from_gcs(f"models/vec_{self.file_name}.pkl", self.vec_path)
+            
         
     def predict(self, from_date: datetime.datetime, to_date: datetime.datetime) -> int:
         df = fetch_data(symbol=self.symbol, interval=self.interval, start_date=from_date, end_date=to_date)
@@ -38,10 +50,10 @@ class CryptoTrainer:
         env = CryptoPredictionEnv(df=df_no_ts, window_size=self.window_size, prediction_horizon=self.predict_horizon)
         env.current_step = self.window_size
         vec_env = DummyVecEnv([lambda: env])
-        vec_env = VecNormalize.load(f"vec_{self.file_name}.pkl", vec_env)
+        vec_env = VecNormalize.load(self.vec_path, vec_env)
         vec_env.training = False
         vec_env.norm_reward = False
-        model = PPO.load(self.file_name, env=vec_env)
+        model = PPO.load(self.model_path, env=vec_env)
 
         obs = vec_env.normalize_obs(env._get_observation())  
 

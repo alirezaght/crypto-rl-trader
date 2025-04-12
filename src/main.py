@@ -3,15 +3,16 @@ from basket import Basket
 import json
 from datetime import datetime
 from dotenv import load_dotenv
-import os 
+from firestore import fetch_config
 
 
 load_dotenv()
+config = fetch_config()
 
-INTERVAL = os.getenv("INTERVAL", "4h")
-WINDOW_DAYS = int(os.getenv("WINDOW_DAYS", 90))
-PREDICT_DAYS = int(os.getenv("PREDICT_DAYS", 30))
-PAIRS = os.getenv("PAIRS", "BTCUSDT").split(",")
+INTERVAL = config.get("INTERVAL", "4h")
+WINDOW_DAYS = int(config.get("WINDOW_DAYS", 90))
+PREDICT_DAYS = int(config.get("PREDICT_DAYS", 30))
+PAIRS = config.get("PAIRS", [])
 
 def main():
     parser = argparse.ArgumentParser()
@@ -40,7 +41,7 @@ def main():
         print("Signals for current date:")
         print(json.dumps(results, indent=4))
 
-if __name__ == "__main__":
+if __name__ == "__main__":    
     main()
 
 

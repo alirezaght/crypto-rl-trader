@@ -1,0 +1,25 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "type": "debugpy",
+        "request": "launch",
+        "name": "Launch Main Program",
+        "program": "${workspaceFolder}/${input:programPath}",
+        "console": "integratedTerminal",
+        "envFile": "${workspaceFolder}/.env"
+      }
+    ],
+    "inputs": [
+      {
+        "type": "pickString",
+        "id": "programPath",
+        "description": "Select the Python file to debug",
+        "options": [
+          "src/main.py",
+          "src/server.py",
+          "src/train.py"
+        ]
+      }
+    ]
+  }

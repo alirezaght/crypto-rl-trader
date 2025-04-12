@@ -1,0 +1,39 @@
+name: Deploy to Cloud Run
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Deploy to Cloud Run
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v4
+
+    - name: Set up Google Cloud SDK
+      uses: google-github-actions/setup-gcloud@v1
+      with:
+        project_id: ${{ secrets.GCP_PROJECT_ID }}
+        service_account_key: ${{ secrets.GCLOUD_SERVICE_KEY }}
+        export_default_credentials: true
+
+    - name: Write Firebase Admin SDK key to file
+      run: echo '${{ secrets.FIREBASE_ADMIN_KEY }}' > serviceAccountKey.json
+
+    - name: Deploy to Cloud Run
+      run: |
+        gcloud run deploy ${{ secrets.CLOUD_RUN_SERVICE }} \
+          --source . \
+          --region ${{ secrets.REGION }} \
+          --platform managed \
+          --no-allow-unauthenticated \
+          --port 8000 \
+          --memory 1Gi
+
+    - name: Clean up key file
+      if: always()
+      run: rm -f serviceAccountKey.json
