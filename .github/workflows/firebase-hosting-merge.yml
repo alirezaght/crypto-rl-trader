@@ -1,24 +1,27 @@
-name: Deploy to Firebase Hosting on merge
+name: Deploy Firebase Hosting
+
 on:
   push:
     branches:
       - main
+
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Node.js
+      - name: Use Node.js 22
         uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: 22
 
-      - name: Install dependencies
-        run: cd frontend && npm ci
-
-      - name: Build frontend
-        run: cd frontend && npm run build
+      - name: Install dependencies and build
+        run: |
+          cd frontend
+          npm install
+          npm run build
 
       - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
@@ -27,4 +30,4 @@ jobs:
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_SILVER_TREAT_456607_E6 }}
           channelId: live
           projectId: ${{ secrets.GCP_PROJECT_ID }}
-          entryPoint: frontend
+          entryPoint: "frontend"
