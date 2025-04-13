@@ -14,6 +14,7 @@ from utils import add_technical_indicators, fetch_data
 from pydantic import BaseModel
 from firestore import store_suggestion
 from fastapi import Request
+from basket import Basket
 
 load_dotenv()
 
@@ -45,23 +46,27 @@ async def available_pairs(user=Depends(get_current_user)):
     pairs = config.get("PAIRS")
     predict_days = config.get("PREDICT_DAYS", 30)
     interval = config.get("INTERVAL", "4h")
-    windoew_days = config.get("WINDOW_DAYS", 90)
+    window_days = config.get("WINDOW_DAYS", 90)
     return {
         "pairs": pairs,
         "predict_days": predict_days,
         "interval": interval,
-        "window_days": windoew_days
+        "window_days": window_days
     }
     
 @app.get("/train")
-async def train(symbol: str, user=Depends(get_current_user)):    
+async def train(user=Depends(get_current_user)):    
     if user.get("role") != "trainer":
         raise HTTPException(status_code=403, detail="Access denied: trainer role required")
-    trainer = CryptoTrainer(symbol=symbol, interval=config.get("INTERVAL", "4h"), days=config.get("WINDOW_DAYS", 90), predict_days=config.get("PREDICT_DAYS", 30), train=True)
-    dt_from = datetime.datetime.now() - datetime.timedelta(days=config.get("WINDOW_DAYS", 90) + 14)
-    dt_to = datetime.datetime.now()
-    action = trainer.predict(dt_from, dt_to)
-    return {"action": action}
+    
+    pairs = config.get("PAIRS")
+    predict_days = config.get("PREDICT_DAYS", 30)
+    interval = config.get("INTERVAL", "4h")
+    window_days = config.get("WINDOW_DAYS", 90)
+    
+    basket = Basket(pairs, interval=interval, days=window_days, predict_days=predict_days)
+    results = basket.get_signals(datetime.now())
+    return {"results": results}
 
 
 @app.get("/llm-stream")
