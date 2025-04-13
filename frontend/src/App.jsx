@@ -22,6 +22,7 @@ import {
   MenuList,
   MenuItem,
 } from '@chakra-ui/react'
+import { FaGoogle } from 'react-icons/fa'
 import logo from './assets/logo.png'
 import { Image } from '@chakra-ui/react'
 import { HamburgerIcon, ChevronDownIcon } from '@chakra-ui/icons'
@@ -37,6 +38,7 @@ import {
   GoogleAuthProvider,
 } from 'firebase/auth'
 import MarkdownContent from './MarkdownContent'
+import { Global } from '@emotion/react'
 
 const firebaseConfig = {
   apiKey: "AIzaSyBr3tD3w8_35ouHIXbtC0mHbzFl-LZqCZ0",
@@ -148,17 +150,63 @@ export default function App() {
   }
 
   const renderAuthForm = () => (
-    <VStack spacing={4}>
-      <Input placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
-      <Input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
-      <Button colorScheme="gold" onClick={handleAuth} isLoading={loading}>
-        {isLogin ? "Login" : "Sign Up"}
-      </Button>
-      <Button onClick={handleGoogleLogin} colorScheme="gold" isLoading={loading}>Continue with Google</Button>
-      <Button variant="link" onClick={() => setIsLogin(!isLogin)}>
-        {isLogin ? "Create an account" : "Back to Login"}
-      </Button>
-    </VStack>
+    <Flex minH="80vh" align="center" justify="center">
+      <Box
+        bg="black"
+        p={8}
+        rounded="md"
+        boxShadow="lg"
+        width="100%"
+        maxW="sm"
+      >
+        <VStack spacing={4} align="stretch">
+          <Heading textAlign="center" size="md" color="gray.700">
+            {isLogin ? "Login to Synap Signal" : "Create your account"}
+          </Heading>
+          <Input
+            bg="black"
+            _hover={{ borderColor: "gold" }}
+            _focus={{ borderColor: "gold" }}
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            variant="filled"
+          />
+          <Input
+            bg="black"
+            _hover={{ borderColor: "gold" }}
+            _focus={{ borderColor: "gold" }}
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            variant="filled"
+          />
+          <Button colorScheme="gold" onClick={handleAuth} isLoading={loading} colorScheme="gold"
+            variant="outline">
+            {isLogin ? "Login" : "Sign Up"}
+          </Button>
+          <IconButton
+            aria-label="Login with Google"
+            icon={<FaGoogle  />}
+            onClick={handleGoogleLogin}
+            colorScheme="gold"
+            variant="solid"
+            isLoading={loading}
+            alignSelf="center"
+            size="lg"
+          />
+          <Button
+            variant="link"
+            color="gold"
+            onClick={() => setIsLogin(!isLogin)}
+            textAlign="center"
+          >
+            {isLogin ? "Create an account" : "Back to Login"}
+          </Button>
+        </VStack>
+      </Box>
+    </Flex>
   )
 
   return (
@@ -253,7 +301,7 @@ export default function App() {
                       const suggestion = formData.get("pair")
                       if (suggestion) {
                         const token = await user.getIdToken()
-                        fetch(`${appUrl}/suggest-pair`, {                          
+                        fetch(`${appUrl}/suggest-pair`, {
                           method: "POST",
                           headers: {
                             "Content-Type": "application/json",
@@ -279,7 +327,7 @@ export default function App() {
                             isClosable: true,
                           })
                         })
-                        
+
                         e.target.reset()
                         // Optionally: Send to backend or email service here
                       }
@@ -299,8 +347,27 @@ export default function App() {
             {selectedPair && (
               <>
                 <Box bg="gray" p={4} rounded="md" minH="40vh">
-                  {streaming ? <Spinner color="gold" /> : (
-                    thinkingText ? <Text whiteSpace="pre-wrap" fontStyle="italic" color="thinking">{thinkingText}</Text> : <Box whiteSpace="pre-wrap">
+                  {streaming ? <Spinner color="gold" /> : (                    
+                    thinkingText ? (
+                      <>
+                        <Global
+                          styles={`
+                            @keyframes blink {
+                              0%, 100% { opacity: 1; }
+                              50% { opacity: 0.5; }
+                            }
+                          `}
+                        />
+                        <Text
+                          whiteSpace="pre-wrap"
+                          fontStyle="italic"
+                          color="thinking"
+                          animation="blink 1.5s ease-in-out infinite"
+                        >
+                          {thinkingText}
+                        </Text>
+                      </>
+                    ) : <Box whiteSpace="pre-wrap">
                       <ReactMarkdown>{llmText}</ReactMarkdown>
                     </Box>
                   )}
