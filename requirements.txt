@@ -11,3 +11,8 @@ google-cloud-storage
 google-cloud-secret-manager
 protobuf==3.20.3
 firebase_admin
+feedparser
+newspaper3k
+lxml_html_clean
+groq
+pydantic

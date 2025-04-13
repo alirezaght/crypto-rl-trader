@@ -7,10 +7,21 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi import Depends
 from security import get_current_user
 from fastapi import HTTPException
+from llm import query_llm
+from fastapi.responses import StreamingResponse
+from news import get_all_news
+from utils import add_technical_indicators, fetch_data
+from pydantic import BaseModel
+from firestore import store_suggestion
+from fastapi import Request
 
 load_dotenv()
 
-app = FastAPI()
+app = FastAPI(    
+    docs_url=None,    
+    redoc_url=None,    
+    openapi_url=None 
+)
 
 app.add_middleware(
     CORSMiddleware,
@@ -51,3 +62,42 @@ async def train(symbol: str, days: int = 90, predict_days: int = 30, user=Depend
     dt_to = datetime.datetime.now()
     action = trainer.predict(dt_from, dt_to)
     return {"action": action}
+
+
+@app.get("/llm-stream")
+async def llm_stream(symbol: str, days: int = 90, predict_days: int = 30, user=Depends(get_current_user)):        
+    def event_generator():
+        yield "<thinking>Analyzing ...</thinking>"
+        trainer = CryptoTrainer(symbol=symbol, days=days, predict_days=predict_days, train=False)        
+        dt_from = datetime.datetime.now() - datetime.timedelta(days=days + 14)
+        dt_to = datetime.datetime.now()
+        yield "<thinking>Fetching historical data ...</thinking>"
+        action = trainer.predict(dt_from, dt_to)
+        yield "<thinking>Fetching recent articles ...</thinking>"
+        news_articles = get_all_news()
+        yield "<thinking>Adding technical indicators ...</thinking>"
+        df = fetch_data(symbol=symbol, interval="4h", start_date=dt_from, end_date=dt_to)
+        df_with_indicators = add_technical_indicators(df)
+        latest_row = df_with_indicators.iloc[-1]
+        technical_snapshot = latest_row.drop(labels=["timestamp"]).to_dict()
+        
+        
+        for chunk in query_llm(symbol, action, technical_snapshot, news_articles):
+            yield chunk
+    
+
+    return StreamingResponse(event_generator(), media_type="text/event-stream")
+
+class PairSuggestion(BaseModel):
+    pair: str
+
+def get_client_ip(request: Request) -> str:
+    x_forwarded_for = request.headers.get("x-forwarded-for")
+    if x_forwarded_for:
+        return x_forwarded_for.split(",")[0].strip()
+    return request.client.host
+
+@app.post("/suggest-pair")
+async def suggest_pair(data: PairSuggestion, request: Request):
+    store_suggestion(data.pair, get_client_ip(request))
+    return {"status": "ok"}

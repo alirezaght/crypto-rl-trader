@@ -14,3 +14,12 @@ def fetch_config() -> Dict[str, Any]:
     if not doc.exists:
         raise ValueError("No config document found in Firestore.")
     return doc.to_dict()
+
+
+def store_suggestion(pair: str, ip: str) -> None:
+    suggestion_ref = db.collection("pair_suggestions").document()
+    suggestion_ref.set({
+        "pair": pair,
+        "ip": ip,
+        "timestamp": firestore.SERVER_TIMESTAMP
+    })

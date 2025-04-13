@@ -4,7 +4,7 @@ import json
 from datetime import datetime
 from dotenv import load_dotenv
 from firestore import fetch_config
-
+from news import get_all_news
 
 load_dotenv()
 config = fetch_config()
