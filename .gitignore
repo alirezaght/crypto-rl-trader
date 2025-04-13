@@ -91,4 +91,3 @@ pyrightconfig.json
 *.vsix
 .history
 .ionide
-serviceAccountKey.json
