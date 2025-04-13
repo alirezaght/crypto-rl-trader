@@ -182,7 +182,7 @@ export default function App() {
             onChange={(e) => setPassword(e.target.value)}
             variant="filled"
           />
-          <Button colorScheme="gold" onClick={handleAuth} isLoading={loading} colorScheme="gold"
+          <Button colorScheme="gold" onClick={handleAuth} isLoading={loading}
             variant="outline">
             {isLogin ? "Login" : "Sign Up"}
           </Button>
