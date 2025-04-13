@@ -70,19 +70,29 @@ export default function App() {
   const [streaming, setStreaming] = useState(false)
   const toast = useToast()
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
+  const [configLoading, setConfigLoading] = useState(true)
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setUser(user)
       setSelectedPair('')
       setLlmText('')
+      setThinking('')
       if (user) {
-        const token = await user.getIdToken()
-        const res = await fetch(`${appUrl}/config`, {
-          headers: { Authorization: `Bearer ${token}` }
-        })
-        const data = await res.json()
-        setConfig(data)
+        try {
+          const token = await user.getIdToken()
+          const res = await fetch(`${appUrl}/config`, {
+            headers: { Authorization: `Bearer ${token}` }
+          })
+          const data = await res.json()
+          setConfig(data)
+        } catch (e) {
+          toast({ title: "Error loading config", description: e.message, status: "error" })
+        } finally {
+          setConfigLoading(false)
+        }
+      } else {
+        setConfigLoading(false)
       }
     })
     return () => unsubscribe()
@@ -188,7 +198,7 @@ export default function App() {
           </Button>
           <IconButton
             aria-label="Login with Google"
-            icon={<FaGoogle  />}
+            icon={<FaGoogle />}
             onClick={handleGoogleLogin}
             colorScheme="gold"
             variant="solid"
@@ -255,127 +265,136 @@ export default function App() {
       </Drawer>
 
       <Box p={4} maxW="4xl" mx="auto">
-        {!user ? renderAuthForm() : (
-          <>
-            {!selectedPair && (
-              <>
-                <MarkdownContent />
-              </>
-            )}
-            <Flex justify="left" align={"center"} >
-              <Menu>
-                <MenuButton as={Button}
-                  minW="200px"
-                  rightIcon={<ChevronDownIcon />} mb={4} colorScheme="gold" color="black" bg="gold">
-                  {selectedPair || "Select a crypto pair"}
-                </MenuButton>
-                <MenuList bg="black" color="text" borderColor="border">
-                  {config?.pairs.map(pair => (
-                    <MenuItem
-                      key={pair}
-                      bg="black"
-                      _hover={{ bg: 'gray', color: 'gold' }}
-                      onClick={() => {
-                        setSelectedPair(pair)
-                        fetchLLMStream(pair)
-                      }}
-                    >
-                      {pair}
-                    </MenuItem>
-                  ))}
-                </MenuList>
-              </Menu>
-            </Flex>
+        {!user ? renderAuthForm() :
+          (
+            configLoading ? (
+              <Flex justify="center" align="center" minH="50vh">
+                <Spinner color="gold" size="xl" thickness="4px" />
+              </Flex>
+            ) :
+              (
+                <>
+                  {!selectedPair && (
+                    <>
+                      <MarkdownContent />
+                    </>
+                  )}
+                  <Flex justify="left" align={"center"} >
+                    <Menu>
+                      <MenuButton as={Button}
+                        minW="200px"
+                        rightIcon={<ChevronDownIcon />} mb={4} colorScheme="gold" color="black" bg="gold">
+                        {selectedPair || "Select a crypto pair"}
+                      </MenuButton>
+                      <MenuList bg="black" color="text" borderColor="border">
+                        {config?.pairs.map(pair => (
+                          <MenuItem
+                            key={pair}
+                            bg="black"
+                            _hover={{ bg: 'gray', color: 'gold' }}
+                            onClick={() => {
+                              setSelectedPair(pair)
+                              fetchLLMStream(pair)
+                            }}
+                          >
+                            {pair}
+                          </MenuItem>
+                        ))}
+                      </MenuList>
+                    </Menu>
+                  </Flex>
 
-            {!selectedPair && (
-              <>
-                <Box mt={4} mb={6} p={4} bg="gray" rounded="md">
-                  <Heading as="h3" size="sm" mb={2} color="gold">
-                    Can't find your favorite pair?
-                  </Heading>
-                  <Text fontSize="sm" mb={2}>Suggest a new pair you'd like to see supported:</Text>
-                  <form
-                    onSubmit={async (e) => {
-                      e.preventDefault()
-                      const formData = new FormData(e.target)
-                      const suggestion = formData.get("pair")
-                      if (suggestion) {
-                        const token = await user.getIdToken()
-                        fetch(`${appUrl}/suggest-pair`, {
-                          method: "POST",
-                          headers: {
-                            "Content-Type": "application/json",
-                            "Authorization": `Bearer ${token}`
-                          },
-                          body: JSON.stringify({ pair: suggestion })
-                        }).then(res => {
-                          if (!res.ok) {
-                            toast({
-                              title: "Error!",
-                              description: `Failed to submit your request.`,
-                              status: "error",
-                              duration: 4000,
-                              isClosable: true,
-                            })
-                            return;
-                          }
-                          toast({
-                            title: "Thank you!",
-                            description: `We've received your request: ${suggestion}`,
-                            status: "success",
-                            duration: 4000,
-                            isClosable: true,
-                          })
-                        })
+                  {!selectedPair && (
+                    <>
+                      <Box mt={4} mb={6} p={4} bg="gray" rounded="md">
+                        <Heading as="h3" size="sm" mb={2} color="gold">
+                          Can't find your favorite pair?
+                        </Heading>
+                        <Text fontSize="sm" mb={2}>Suggest a new pair you'd like to see supported:</Text>
+                        <form
+                          onSubmit={async (e) => {
+                            e.preventDefault()
+                            const formData = new FormData(e.target)
+                            const suggestion = formData.get("pair")
+                            if (suggestion) {
+                              const token = await user.getIdToken()
+                              fetch(`${appUrl}/suggest-pair`, {
+                                method: "POST",
+                                headers: {
+                                  "Content-Type": "application/json",
+                                  "Authorization": `Bearer ${token}`
+                                },
+                                body: JSON.stringify({ pair: suggestion })
+                              }).then(res => {
+                                if (!res.ok) {
+                                  toast({
+                                    title: "Error!",
+                                    description: `Failed to submit your request.`,
+                                    status: "error",
+                                    duration: 4000,
+                                    isClosable: true,
+                                  })
+                                  return;
+                                }
+                                toast({
+                                  title: "Thank you!",
+                                  description: `We've received your request: ${suggestion}`,
+                                  status: "success",
+                                  duration: 4000,
+                                  isClosable: true,
+                                })
+                              })
 
-                        e.target.reset()
-                        // Optionally: Send to backend or email service here
-                      }
-                    }}
-                  >
-                    <Flex gap={2}>
-                      <Input name="pair" placeholder="e.g., SOL/USDT" size="sm" bg="white" color="black" />
-                      <Button type="submit" size="sm" colorScheme="gold" bg="gold" color="black">
-                        Submit
-                      </Button>
-                    </Flex>
-                  </form>
-                </Box>
-              </>
-            )}
+                              e.target.reset()
+                              // Optionally: Send to backend or email service here
+                            }
+                          }}
+                        >
+                          <Flex gap={2}>
+                            <Input name="pair" placeholder="e.g., SOL/USDT" size="sm" bg="white" color="black" />
+                            <Button type="submit" size="sm" colorScheme="gold" bg="gold" color="black">
+                              Submit
+                            </Button>
+                          </Flex>
+                        </form>
+                      </Box>
+                    </>
+                  )}
 
-            {selectedPair && (
-              <>
-                <Box bg="gray" p={4} rounded="md" minH="40vh">
-                  {streaming ? <Spinner color="gold" /> : (                    
-                    thinkingText ? (
-                      <>
-                        <Global
-                          styles={`
+                  {selectedPair && (
+                    <>
+                      <Box bg="gray" p={4} rounded="md" minH="40vh">
+                        {streaming ? <Spinner color="gold" /> : (
+                          thinkingText ? (
+                            <>
+                              <Global
+                                styles={`
                             @keyframes blink {
                               0%, 100% { opacity: 1; }
                               50% { opacity: 0.5; }
                             }
                           `}
-                        />
-                        <Text
-                          whiteSpace="pre-wrap"
-                          fontStyle="italic"
-                          color="thinking"
-                          animation="blink 1.5s ease-in-out infinite"
-                        >
-                          {thinkingText}
-                        </Text>
-                      </>
-                    ) : <Box whiteSpace="pre-wrap">
-                      <ReactMarkdown>{llmText}</ReactMarkdown>
-                    </Box>
+                              />
+                              <Text
+                                whiteSpace="pre-wrap"
+                                fontStyle="italic"
+                                color="thinking"
+                                animation="blink 1.5s ease-in-out infinite"
+                              >
+                                {thinkingText}
+                              </Text>
+                            </>
+                          ) : <Box whiteSpace="pre-wrap">
+                            <ReactMarkdown>{llmText}</ReactMarkdown>
+                          </Box>
+                        )}
+                      </Box>
+                    </>
                   )}
-                </Box>
-              </>
-            )}
-          </>
-        )}
+                </>
+              )
+          )
+        }
       </Box>
     </Box>
 
