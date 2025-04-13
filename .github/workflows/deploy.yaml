@@ -26,13 +26,25 @@ jobs:
       with:
         project_id: ${{ secrets.GCP_PROJECT_ID }}
 
+    - name: Configure Docker for Artifact Registry
+      run: gcloud auth configure-docker europe-west1-docker.pkg.dev --quiet
+
     - name: Write Firebase Admin key to file
       run: echo '${{ secrets.FIREBASE_ADMIN_KEY }}' > serviceAccountKey.json
+
+    - name: Build Docker image
+      run: |
+        docker build -t ${{ secrets.REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/cloud-run-source-deploy/tradepulse-api:latest .
+
+    - name: Push Docker image to Artifact Registry
+      run: |
+        docker push ${{ secrets.REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/cloud-run-source-deploy/tradepulse-api:latest
+
 
     - name: Deploy to Cloud Run
       run: |
         gcloud run deploy ${{ secrets.CLOUD_RUN_SERVICE }} \
-          --source . \
+          --image ${{ secrets.REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/cloud-run-source-deploy/tradepulse-api:latest \
           --region ${{ secrets.REGION }} \
           --platform managed \
           --allow-unauthenticated \
