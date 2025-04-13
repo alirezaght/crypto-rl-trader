@@ -48,8 +48,8 @@ const firebaseConfig = {
   measurementId: "G-ZY38R9FRE4"
 }
 
-const appUrl = "https://app.synapsignal.com"
-// const appUrl = "http://localhost:8000"
+// const appUrl = "https://app.synapsignal.com"
+const appUrl = "http://localhost:8000"
 
 const app = initializeApp(firebaseConfig)
 const auth = getAuth(app)
@@ -247,15 +247,17 @@ export default function App() {
                   </Heading>
                   <Text fontSize="sm" mb={2}>Suggest a new pair you'd like to see supported:</Text>
                   <form
-                    onSubmit={(e) => {
+                    onSubmit={async (e) => {
                       e.preventDefault()
                       const formData = new FormData(e.target)
                       const suggestion = formData.get("pair")
                       if (suggestion) {
-                        fetch(`${appUrl}/suggest-pair`, {
+                        const token = await user.getIdToken()
+                        fetch(`${appUrl}/suggest-pair`, {                          
                           method: "POST",
                           headers: {
-                            "Content-Type": "application/json"
+                            "Content-Type": "application/json",
+                            "Authorization": `Bearer ${token}`
                           },
                           body: JSON.stringify({ pair: suggestion })
                         }).then(res => {

@@ -2,19 +2,22 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "type": "debugpy",
-            "request": "launch",
             "name": "Run FastAPI Server",
-            "program": "${workspaceFolder}/src/server.py",
-            "console": "integratedTerminal",
-            "env": {
-                "UVICORN_RELOAD": "true"
-            },
+            "type": "python",
+            "request": "launch",
+            "module": "uvicorn",
             "args": [
-                "--host", "0.0.0.0",
-                "--port", "8000"
-            ]
-        },
+              "src.server:app",        // module:app
+              "--host", "0.0.0.0",
+              "--port", "8000",
+              "--reload"
+            ],
+            "jinja": true,
+            "env": {
+              "PYTHONPATH": "${workspaceFolder}/src"
+            },
+            "console": "integratedTerminal"
+          },
 
       {
         "type": "debugpy",
