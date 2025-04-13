@@ -32,9 +32,9 @@ app.add_middleware(
 )
 
 @app.get("/predict")
-async def predict(symbol: str, days: int = 90, predict_days: int = 30, user=Depends(get_current_user)):    
-    trainer = CryptoTrainer(symbol=symbol, days=days, predict_days=predict_days, train=False)
-    dt_from = datetime.datetime.now() - datetime.timedelta(days=days + 14)
+async def predict(symbol: str, user=Depends(get_current_user)):    
+    trainer = CryptoTrainer(symbol=symbol, interval=config.get("INTERVAL", "4h"), days=config.get("WINDOW_DAYS", 90), predict_days=config.get("PREDICT_DAYS", 30), train=False)
+    dt_from = datetime.datetime.now() - datetime.timedelta(days=config.get("WINDOW_DAYS", 90) + 14)
     dt_to = datetime.datetime.now()
     action = trainer.predict(dt_from, dt_to)
     return {"action": action}
@@ -54,22 +54,22 @@ async def available_pairs(user=Depends(get_current_user)):
     }
     
 @app.get("/train")
-async def train(symbol: str, days: int = 90, predict_days: int = 30, user=Depends(get_current_user)):    
+async def train(symbol: str, user=Depends(get_current_user)):    
     if user.get("role") != "trainer":
         raise HTTPException(status_code=403, detail="Access denied: trainer role required")
-    trainer = CryptoTrainer(symbol=symbol, days=days, predict_days=predict_days, train=True)
-    dt_from = datetime.datetime.now() - datetime.timedelta(days=days + 14)
+    trainer = CryptoTrainer(symbol=symbol, interval=config.get("INTERVAL", "4h"), days=config.get("WINDOW_DAYS", 90), predict_days=config.get("PREDICT_DAYS", 30), train=True)
+    dt_from = datetime.datetime.now() - datetime.timedelta(days=config.get("WINDOW_DAYS", 90) + 14)
     dt_to = datetime.datetime.now()
     action = trainer.predict(dt_from, dt_to)
     return {"action": action}
 
 
 @app.get("/llm-stream")
-async def llm_stream(symbol: str, days: int = 90, predict_days: int = 30, user=Depends(get_current_user)):        
+async def llm_stream(symbol: str, user=Depends(get_current_user)):        
     def event_generator():
         yield "<thinking>Analyzing ...</thinking>"
-        trainer = CryptoTrainer(symbol=symbol, days=days, predict_days=predict_days, train=False)        
-        dt_from = datetime.datetime.now() - datetime.timedelta(days=days + 14)
+        trainer = CryptoTrainer(symbol=symbol, interval=config.get("INTERVAL", "4h"), days=config.get("WINDOW_DAYS", 90), predict_days=config.get("PREDICT_DAYS", 30), train=False)        
+        dt_from = datetime.datetime.now() - datetime.timedelta(days=config.get("WINDOW_DAYS", 90) + 14)
         dt_to = datetime.datetime.now()
         yield "<thinking>Fetching historical data ...</thinking>"
         action = trainer.predict(dt_from, dt_to)

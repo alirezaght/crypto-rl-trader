@@ -13,7 +13,7 @@ import {
 const markdown = `
 ## 📘 Trading Terms & Disclaimers
 
-**Synap Signal** is an intelligent crypto assistant that analyzes the **most recent 90 days** of historical price and data to predict **the likely market movement over the next 30 days**. Our insights combine:
+**Synap Signal** is an intelligent crypto assistant that analyzes the **most recent 90 days** of historical price and data to predict **the likely market movement over the next 15 days**. Our insights combine:
 
 - Reinforcement Learning (RL)-based agent predictions  
 - Technical indicators such as **RSI**, **MACD**, and **EMA**  
