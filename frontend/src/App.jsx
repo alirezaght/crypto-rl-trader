@@ -48,7 +48,7 @@ const firebaseConfig = {
   measurementId: "G-ZY38R9FRE4"
 }
 
-const appUrl = "https://api.synapsignal.com"
+const appUrl = "https://app.synapsignal.com"
 // const appUrl = "http://localhost:8000"
 
 const app = initializeApp(firebaseConfig)

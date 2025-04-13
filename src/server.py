@@ -98,6 +98,6 @@ def get_client_ip(request: Request) -> str:
     return request.client.host
 
 @app.post("/suggest-pair")
-async def suggest_pair(data: PairSuggestion, request: Request):
+async def suggest_pair(data: PairSuggestion, request: Request, user=Depends(get_current_user)):
     store_suggestion(data.pair, get_client_ip(request))
     return {"status": "ok"}

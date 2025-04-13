@@ -36,6 +36,7 @@ jobs:
           --region ${{ secrets.REGION }} \
           --platform managed \
           --allow-unauthenticated \
+          --timeout=600s \
           --port 8000 \
           --memory 1Gi
 
