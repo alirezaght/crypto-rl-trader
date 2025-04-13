@@ -7,7 +7,6 @@ import {
   UnorderedList,
   ListItem,
   Code,
-  Blockquote,
   Button,
 } from '@chakra-ui/react'
 

@@ -1,13 +1,11 @@
 // src/App.jsx
 import React, { useEffect, useState } from 'react'
 import {
-  ChakraProvider,
   Box,
   Heading,
   Text,
   VStack,
   Button,
-  Select,
   Input,
   useToast,
   Drawer,
@@ -23,7 +21,6 @@ import {
   MenuButton,
   MenuList,
   MenuItem,
-  background
 } from '@chakra-ui/react'
 import logo from './assets/logo.png'
 import { Image } from '@chakra-ui/react'
