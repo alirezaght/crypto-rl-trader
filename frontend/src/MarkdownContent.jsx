@@ -11,21 +11,32 @@ import {
 } from '@chakra-ui/react'
 
 const markdown = `
-## Welcome to Synap Signal
+## 📘 Trading Terms & Disclaimers
 
-This app analyzes the **past 90 days** of historical price data for a selected cryptocurrency pair, combines it with insights from our custom-built **Reinforcement Learning (RL) agent**, and incorporates the **latest news headlines** from trusted crypto media sources.
+**Synap Signal** is an intelligent crypto assistant that analyzes the **most recent 90 days** of historical price and data to predict **the likely market movement over the next 30 days**. Our insights combine:
 
-Our goal is to generate an intelligent signal suggesting whether to:
-
-- **Buy**
-- **Sell**
-- **Hold**
-
-based on a synthesis of data, market conditions, and AI-generated reasoning.
+- Reinforcement Learning (RL)-based agent predictions  
+- Technical indicators such as **RSI**, **MACD**, and **EMA**  
+- Aggregated crypto news sentiment from trusted media sources  
 
 > ⚠️ **Disclaimer**  
-> This is _not_ financial advice. Use this tool as **an additional source of insight**, not a definitive guide. Always do your own research, consider multiple factors before trading, and make informed decisions.  
-> We do not take any responsibility for financial actions based on the content provided.
+> This tool is intended **for informational and research purposes only**. It is not financial advice.  
+> Always do your own research and consider multiple factors before making investment decisions.  
+
+---
+
+### 🔍 Additional Notes
+
+- Predictions are **probabilistic** and should not be interpreted as guarantees.  
+- Past performance of any model or signal is **not indicative of future results**.  
+- The app does **not offer real-time data**. Market conditions may shift rapidly.  
+- **No trades are executed automatically.** You are solely responsible for your own actions.  
+- Trading cryptocurrencies carries **substantial risk** and may not be suitable for all investors.
+
+---
+
+💡 Use Synap Signal as an **additional source of insight**, alongside your own research and risk management strategy.
+
 ---
 
 **Like this app? Support Synap Signal with a donation:**  
