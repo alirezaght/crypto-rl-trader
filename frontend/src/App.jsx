@@ -96,7 +96,7 @@ export default function App() {
       }
     })
     return () => unsubscribe()
-  }, [])
+  }, [toast])
 
   const handleAuth = async () => {
     try {
