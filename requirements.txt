@@ -1,10 +1,10 @@
 fastapi
 gymnasium
 matplotlib
-numpy
+numpy==2.0.2
 pandas
 python-dotenv
-stable_baselines3
+stable_baselines3==2.6.0
 ta
 joblib
 google-cloud-storage
