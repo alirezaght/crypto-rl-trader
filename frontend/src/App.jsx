@@ -276,6 +276,7 @@ export default function App() {
           onClick={() => {
             setSelectedPair('')
             setLlmText('')
+            setLLMPage(false)
             setThinking('')
           }}
         />
