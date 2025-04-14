@@ -148,9 +148,10 @@ export default function App() {
         const chunk = decoder.decode(value || new Uint8Array(), { stream: !done })
         if (chunk) {
           setStreaming(false)
-          if (chunk.startsWith("<thinking>") && chunk.endsWith("</thinking>")) {
-            const thinkingText = chunk.slice(10, -11)
-            setThinking(thinkingText)
+          if (chunk.includes("<thinking>") && chunk.includes("</thinking>")) {
+            const matches = [...chunk.matchAll(/<thinking>(.*?)<\/thinking>/g)]
+            const lastThinking = matches[matches.length - 1]?.[1] || ''
+            setThinking(lastThinking)
           } else {
             setThinking('')
             setLlmText(prev => prev + chunk)
@@ -187,9 +188,10 @@ export default function App() {
         const chunk = decoder.decode(value || new Uint8Array(), { stream: !done })
         if (chunk) {
           setStreaming(false)
-          if (chunk.startsWith("<thinking>") && chunk.endsWith("</thinking>")) {
-            const thinkingText = chunk.slice(10, -11)
-            setThinking(thinkingText)
+          if (chunk.includes("<thinking>") && chunk.includes("</thinking>")) {
+            const matches = [...chunk.matchAll(/<thinking>(.*?)<\/thinking>/g)]
+            const lastThinking = matches[matches.length - 1]?.[1] || ''
+            setThinking(lastThinking)
           } else {
             setThinking('')
             setLlmText(prev => prev + chunk)
