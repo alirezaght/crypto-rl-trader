@@ -16,3 +16,4 @@ newspaper3k
 lxml_html_clean
 groq
 pydantic
+python-binance

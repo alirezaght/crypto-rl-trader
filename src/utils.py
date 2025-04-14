@@ -32,11 +32,32 @@ def print_spinner():
 
 def add_technical_indicators(df):
     df = df.copy()
-    df["rsi"] = ta.momentum.RSIIndicator(close=df["close"], window=14).rsi()
-    df["macd"] = ta.trend.MACD(close=df["close"]).macd()
-    df["macd_signal"] = ta.trend.MACD(close=df["close"]).macd_signal()
-    df["ema_20"] = ta.trend.EMAIndicator(close=df["close"], window=20).ema_indicator()
-    df["ema_50"] = ta.trend.EMAIndicator(close=df["close"], window=50).ema_indicator()
+    close = df["close"]
+
+    # Momentum
+    df["rsi"] = ta.momentum.RSIIndicator(close=close).rsi()
+    df["roc"] = ta.momentum.ROCIndicator(close=close).roc()
+    df["stoch_k"] = ta.momentum.StochasticOscillator(high=df["high"], low=df["low"], close=close).stoch()
+    df["stoch_d"] = ta.momentum.StochasticOscillator(high=df["high"], low=df["low"], close=close).stoch_signal()
+
+    # Trend
+    macd = ta.trend.MACD(close=close)
+    df["macd"] = macd.macd()
+    df["macd_signal"] = macd.macd_signal()
+    df["ema_20"] = ta.trend.EMAIndicator(close=close, window=20).ema_indicator()
+    df["ema_50"] = ta.trend.EMAIndicator(close=close, window=50).ema_indicator()
+    df["adx"] = ta.trend.ADXIndicator(high=df["high"], low=df["low"], close=close).adx()
+
+    # Volatility
+    bb = ta.volatility.BollingerBands(close=close)
+    df["bollinger_mavg"] = bb.bollinger_mavg()
+    df["bollinger_hband"] = bb.bollinger_hband()
+    df["bollinger_lband"] = bb.bollinger_lband()
+    df["atr"] = ta.volatility.AverageTrueRange(high=df["high"], low=df["low"], close=close).average_true_range()
+
+    # Volume
+    df["obv"] = ta.volume.OnBalanceVolumeIndicator(close=close, volume=df["volume"]).on_balance_volume()
+
     df = df.dropna()
     return df
 
@@ -80,7 +101,7 @@ def fetch_data(
     ])
 
     df["timestamp"] = pd.to_datetime(df["timestamp"], unit='ms')
-    df = df[["timestamp", "open", "high", "low", "close"]]
-    df[["open", "high", "low", "close"]] = df[["open", "high", "low", "close"]].astype(float)
+    df = df[["timestamp", "open", "high", "low", "close", "volume"]]
+    df[["open", "high", "low", "close", "volume"]] = df[["open", "high", "low", "close", "volume"]].astype(float)
     df = df.sort_values("timestamp").reset_index(drop=True)
     return df
