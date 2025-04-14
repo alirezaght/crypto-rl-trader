@@ -7,9 +7,9 @@ from utils import interval_to_hours, print_spinner
 
 
 class Basket:
-    def __init__(self, symbols: List[str], interval="4h", days=90, predict_days=30):
+    def __init__(self, symbols: List[str], interval="4h", days=90, predict_days=30, train=True):
         self.assets = {
-            symbol: CryptoTrainer(symbol=symbol, interval=interval, days=days, predict_days=predict_days)
+            symbol: CryptoTrainer(symbol=symbol, interval=interval, days=days, predict_days=predict_days, train=train)
             for symbol in symbols
         }
         self.interval = interval
@@ -18,13 +18,13 @@ class Basket:
         
     def get_signals(self, at_datetime: datetime.datetime) -> Dict[str, str]:
         signal_map = {
-            0: "HOLD (<5%)",
-            1: "BUY (<25%)",
-            2: "BUY (25-50%)",
-            3: "BUY (>50%)",
-            4: "SELL (<25%)",
-            5: "SELL (25-50%)",
-            6: "SELL (>50%)"
+            0: "HOLD",
+            1: "BUY slight chance of rise",
+            2: "BUY moderate chance of rise",
+            3: "BUY high chance of rise",
+            4: "SELL slight chance of drop",
+            5: "SELL moderate chance of drop",
+            6: "SELL high chance of drop",
         }
         signals = {}
         for symbol, trainer in self.assets.items():

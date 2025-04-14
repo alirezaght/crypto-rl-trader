@@ -19,6 +19,7 @@ class CryptoTrainer:
         self.model_path = f"/tmp/{self.file_name}.zip"
         self.vec_path = f"/tmp/vec_{self.file_name}.pkl"      
         model_exists = gcs_file_exists(f"models/{self.file_name}.zip") and gcs_file_exists(f"models/vec_{self.file_name}.pkl")
+        self.train = train
 
         if not model_exists:
             if not train:

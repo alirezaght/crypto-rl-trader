@@ -68,6 +68,7 @@ export default function App() {
   const [llmText, setLlmText] = useState('')
   const [thinkingText, setThinking] = useState('')
   const [streaming, setStreaming] = useState(false)
+  const [llmPage, setLLMPage] = useState(false)
   const toast = useToast()
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   const [configLoading, setConfigLoading] = useState(true)
@@ -78,6 +79,7 @@ export default function App() {
       setSelectedPair('')
       setLlmText('')
       setThinking('')
+      setLLMPage(false)
       if (user) {
         try {
           const token = await user.getIdToken()
@@ -122,10 +124,50 @@ export default function App() {
     }
   }
 
+  const fetchLLMStreamSummary = async () => {
+    if (!user) return
+    setLlmText('')
+    setStreaming(true)
+    setLLMPage(true)
+
+    try {
+      const token = await user.getIdToken()
+      const res = await fetch(`${appUrl}/llm-summary`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+
+      if (!res.ok) throw new Error("Failed to stream LLM response.")
+
+      const reader = res.body.getReader()
+      const decoder = new TextDecoder("utf-8")
+
+      let done = false
+      while (!done) {
+        const { value, done: doneReading } = await reader.read()
+        done = doneReading
+        const chunk = decoder.decode(value || new Uint8Array(), { stream: !done })
+        if (chunk) {
+          setStreaming(false)
+          if (chunk.startsWith("<thinking>") && chunk.endsWith("</thinking>")) {
+            const thinkingText = chunk.slice(10, -11)
+            setThinking(thinkingText)
+          } else {
+            setThinking('')
+            setLlmText(prev => prev + chunk)
+          }
+        }
+      }
+    } catch (err) {
+      toast({ title: "LLM Error", description: err.message, status: "error" })
+    }
+
+  }
+
   const fetchLLMStream = async (symbol) => {
     if (!user) return
     setLlmText('')
     setStreaming(true)
+    setLLMPage(true)
 
     try {
       const token = await user.getIdToken()
@@ -274,7 +316,7 @@ export default function App() {
             ) :
               (
                 <>
-                  {!selectedPair && (
+                  {!llmPage && (
                     <>
                       <MarkdownContent />
                     </>
@@ -304,8 +346,19 @@ export default function App() {
                     </Menu>
                   </Flex>
 
-                  {!selectedPair && (
+                  {!llmPage && (
                     <>
+                      <Button
+                        mt={4}
+                        colorScheme="gold"
+                        color={"black"}
+                        bg="gold"
+                        onClick={() => {
+                          fetchLLMStreamSummary()
+                        }}
+                      >
+                        Summarize
+                      </Button>
                       <Box mt={4} mb={6} p={4} bg="gray" rounded="md">
                         <Heading as="h3" size="sm" mb={2} color="gold">
                           Can't find your favorite pair?
@@ -361,7 +414,7 @@ export default function App() {
                     </>
                   )}
 
-                  {selectedPair && (
+                  {llmPage && (
                     <>
                       <Box bg="gray" p={4} rounded="md" minH="40vh">
                         {streaming ? <Spinner color="gold" /> : (

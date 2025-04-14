@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi import Depends
 from security import get_current_user
 from fastapi import HTTPException
-from llm import query_llm
+from llm import query_llm, query_llm_for_summary
 from fastapi.responses import StreamingResponse
 from news import get_all_news
 from utils import add_technical_indicators, fetch_data
@@ -65,7 +65,7 @@ async def train(user=Depends(get_current_user)):
     window_days = config.get("WINDOW_DAYS", 90)
     
     basket = Basket(pairs, interval=interval, days=window_days, predict_days=predict_days)
-    results = basket.get_signals(datetime.now())
+    results = basket.get_signals(datetime.datetime.now())
     return {"results": results}
 
 
@@ -106,3 +106,35 @@ def get_client_ip(request: Request) -> str:
 async def suggest_pair(data: PairSuggestion, request: Request, user=Depends(get_current_user)):
     store_suggestion(data.pair, get_client_ip(request))
     return {"status": "ok"}
+
+@app.get("/llm-summary")
+async def llm_summary(user=Depends(get_current_user)):
+    def event_generator():
+        yield "<thinking>Analyzing ...</thinking>"
+        pairs = config.get("PAIRS")
+        predict_days = config.get("PREDICT_DAYS", 30)
+        interval = config.get("INTERVAL", "4h")
+        window_days = config.get("WINDOW_DAYS", 90)
+        yield "<thinking>Predicting ...</thinking>"
+        basket = Basket(pairs, interval=interval, days=window_days, predict_days=predict_days, train=False)
+        results = basket.get_signals(datetime.datetime.now())                
+        yield "<thinking>Fetching recent articles ...</thinking>"
+        news_articles = get_all_news()
+        yield "<thinking>Adding technical indicators ...</thinking>"
+        dt_from = datetime.datetime.now() - datetime.timedelta(days=window_days + 14)
+        dt_to = datetime.datetime.now()
+        technical_snapshots = {}
+        for symbol in pairs:
+            df = fetch_data(symbol=symbol, interval="4h", start_date=dt_from, end_date=dt_to)
+            df_with_indicators = add_technical_indicators(df)
+            latest_row = df_with_indicators.iloc[-1]
+            technical_snapshot = latest_row.drop(labels=["timestamp"]).to_dict()
+            technical_snapshots[symbol] = technical_snapshot
+            
+        yield "<thinking>Summarizing ...</thinking>"
+        
+        for chunk in query_llm_for_summary(technical_snapshots, news_articles, results):
+            yield chunk
+    
+
+    return StreamingResponse(event_generator(), media_type="text/event-stream")

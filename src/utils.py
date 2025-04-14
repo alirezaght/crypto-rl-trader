@@ -4,7 +4,8 @@ import datetime
 from joblib import Memory
 import ta
 from secret_manager import get_twelvedata_key
-
+from binance.client import Client
+import asyncio
 
 api_key = get_twelvedata_key()
 
@@ -39,6 +40,13 @@ def add_technical_indicators(df):
     df = df.dropna()
     return df
 
+def get_binance_client():
+    try:
+        asyncio.get_event_loop()
+    except RuntimeError:
+        asyncio.set_event_loop(asyncio.new_event_loop())
+    return Client(api_key=None, api_secret=None, tld="us")
+
 @memory.cache
 def fetch_data(
     symbol="BTC/USD",
@@ -47,36 +55,31 @@ def fetch_data(
     end_date: datetime.datetime = None,
     lookback_days=500
 ):
+    symbol = symbol.replace("/", "").replace("USD","USDT").upper()
     print_spinner()
-
-    if not api_key:
-        raise ValueError("TWELVEDATA_API_KEY not found in environment variables")
 
     end_time = datetime.datetime.now() if end_date is None else end_date
     start_time = start_date if start_date else end_time - datetime.timedelta(days=lookback_days)
+    client = get_binance_client()
+    
 
-    url = "https://api.twelvedata.com/time_series"
-    params = {
-        "symbol": symbol,
-        "interval": interval,
-        "start_date": start_time.strftime("%Y-%m-%d %H:%M:%S"),
-        "end_date": end_time.strftime("%Y-%m-%d %H:%M:%S"),
-        "apikey": api_key,
-        "format": "JSON",
-        "outputsize": 5000
-    }
+    klines = client.get_historical_klines(
+        symbol=symbol,
+        interval=interval,
+        start_str=start_time.strftime("%d %b %Y %H:%M:%S"),
+        end_str=end_time.strftime("%d %b %Y %H:%M:%S")
+    )
 
-    response = requests.get(url, params=params)
-    response.raise_for_status()
-    data = response.json()
+    if not klines:
+        raise ValueError("No data returned from Binance.")
 
-    if "values" not in data:
-        raise ValueError(f"Unexpected response from Twelve Data: {data}")
+    df = pd.DataFrame(klines, columns=[
+        "timestamp", "open", "high", "low", "close", "volume",
+        "close_time", "quote_asset_volume", "num_trades",
+        "taker_buy_base_volume", "taker_buy_quote_volume", "ignore"
+    ])
 
-    df = pd.DataFrame(data["values"])
-    df.columns = [col.lower() for col in df.columns]
-    df["datetime"] = pd.to_datetime(df["datetime"])
-    df = df.rename(columns={"datetime": "timestamp"})
+    df["timestamp"] = pd.to_datetime(df["timestamp"], unit='ms')
     df = df[["timestamp", "open", "high", "low", "close"]]
     df[["open", "high", "low", "close"]] = df[["open", "high", "low", "close"]].astype(float)
     df = df.sort_values("timestamp").reset_index(drop=True)

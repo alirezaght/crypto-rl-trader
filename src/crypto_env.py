@@ -63,23 +63,23 @@ class CryptoPredictionEnv(gym.Env):
     def _calculate_reward(self, action, max_pct_change, min_pct_change):
         if action == 0:  # HOLD
             volatility = abs(max_pct_change - min_pct_change)
-            if volatility < 1.0:
-                return 0.2  # low-volatility, passive reward
+            if volatility < 0.1:
+                return 0.1  # low-volatility, passive reward
             return -0.1
 
         if action in [1, 2, 3]:  # BUY actions
             expected_gain = max_pct_change
             size_multiplier = [0.25, 0.5, 1.0][action - 1]
             if expected_gain > 0:
-                return (expected_gain / 5.0) * size_multiplier
-            return -0.5 * size_multiplier
+                return (expected_gain) * size_multiplier
+            return - size_multiplier
 
         if action in [4, 5, 6]:  # SELL actions
             expected_loss = min_pct_change
             size_multiplier = [0.25, 0.5, 1.0][action - 4]
             if expected_loss < 0:
-                return (abs(expected_loss) / 5.0) * size_multiplier
-            return -0.5 * size_multiplier
+                return abs(expected_loss) * size_multiplier
+            return - size_multiplier
 
         return -1.0
 
