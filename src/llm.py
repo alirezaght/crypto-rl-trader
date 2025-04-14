@@ -61,21 +61,21 @@ def build_llm_prompt_for_summary(technical_indicators: Dict[str, Dict], news_art
     for symbol, indicators in technical_indicators.items():
         technical_prompt += f"""
 **{symbol} Technical Indicators:**
-- RSI: {technical_indicators['rsi']}
-- MACD: {technical_indicators['macd']}
-- MACD Signal: {technical_indicators['macd_signal']}
-- EMA 20: {technical_indicators['ema_20']}
-- EMA 50: {technical_indicators['ema_50']}
-- Stochastic K: {technical_indicators['stoch_k']}
-- Stochastic D: {technical_indicators['stoch_d']}
-- ROC: {technical_indicators['roc']}
-- ADX: {technical_indicators['adx']}
-- Bollinger MAVG: {technical_indicators['bollinger_mavg']}
-- Bollinger Upper Band: {technical_indicators['bollinger_hband']}
-- Bollinger Lower Band: {technical_indicators['bollinger_lband']}
-- ATR: {technical_indicators['atr']}
-- On-Balance Volume: {technical_indicators['obv']}
-- Latest Price: {technical_indicators.get('close')}
+- RSI: {indicators['rsi']}
+- MACD: {indicators['macd']}
+- MACD Signal: {indicators['macd_signal']}
+- EMA 20: {indicators['ema_20']}
+- EMA 50: {indicators['ema_50']}
+- Stochastic K: {indicators['stoch_k']}
+- Stochastic D: {indicators['stoch_d']}
+- ROC: {indicators['roc']}
+- ADX: {indicators['adx']}
+- Bollinger MAVG: {indicators['bollinger_mavg']}
+- Bollinger Upper Band: {indicators['bollinger_hband']}
+- Bollinger Lower Band: {indicators['bollinger_lband']}
+- ATR: {indicators['atr']}
+- On-Balance Volume: {indicators['obv']}
+- Latest Price: {indicators.get('close')}
 """
 
     prompt = f"""You are a trading assistant AI. Use the information provided to recommend an action on the provided pairs.
