@@ -1,5 +1,9 @@
 # 🧠 Reinforcement Learning Crypto Trader
 
+[![Try Online](https://img.shields.io/badge/Launch%20App-SynapSignal-blue?style=for-the-badge)](https://synapsignal.com)
+[![Python](https://img.shields.io/badge/python-3.9%2B-blue.svg?style=for-the-badge)](https://www.python.org/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
+
 A Deep Reinforcement Learning system that uses PPO to learn profitable trading strategies across multiple cryptocurrencies using historical OHLCV data. The agent predicts actions like **buy**, **sell**, or **hold** for the next month based on the last 90 days of 4H market data — enhanced with technical indicators.
 
 ## 📦 Features
@@ -9,6 +13,7 @@ A Deep Reinforcement Learning system that uses PPO to learn profitable trading s
 - ✅ Real-time signal generation
 - ✅ Backtesting with profit tracking and logging
 - ✅ Persistent model + vector normalization saving/loading
+- ✅ **Try it online for free at [Synap Signal](https://synapsignal.com)** 🚀
 ---
 
 ## 🚀 Installation
@@ -74,6 +79,15 @@ Output:
 - Models and normalization stats are saved as BTCUSDT_90_30_4h.zip and vec_BTCUSDT_90_30_4h.pkl
 - Cached training is skipped if these files already exist
 - Training takes a few minutes depending on your machine
+
+⸻
+
+🌐 Try it Online
+
+You can try this project via a friendly UI on **[Synap Signal](https://synapsignal.com)** — no setup required, free to use.
+
+⸻
+
 
 ## 📜 License
 MIT License

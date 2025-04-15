@@ -6,7 +6,9 @@ on:
       - main
     paths:
       - '**'
-      - '!frontend/**'  # ❌ ignore all changes in frontend/
+    paths-ignore:
+      - 'README.md'
+      - 'frontend/**'
 
 jobs:
   deploy:
