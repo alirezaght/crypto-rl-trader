@@ -80,13 +80,13 @@ Output:
 - Cached training is skipped if these files already exist
 - Training takes a few minutes depending on your machine
 
-⸻
+---
 
 🌐 Try it Online
 
 You can try this project via a friendly UI on **[Synap Signal](https://synapsignal.com)** — no setup required, free to use.
 
-⸻
+---
 
 
 ## 📜 License
