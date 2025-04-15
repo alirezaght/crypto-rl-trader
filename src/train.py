@@ -3,7 +3,7 @@ from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize
 import numpy as np
 from crypto_env import CryptoPredictionEnv
 import matplotlib.pyplot as plt
-from utils import get_candle_count, fetch_data
+from utils import get_candle_count, fetch_data, clamp_to_hour
 import datetime
 from storage import download_from_gcs, gcs_file_exists, upload_to_gcs
 
@@ -44,7 +44,7 @@ class CryptoTrainer:
             
         
     def predict(self, from_date: datetime.datetime, to_date: datetime.datetime) -> int:
-        df = fetch_data(symbol=self.symbol, interval=self.interval, start_date=from_date, end_date=to_date)
+        df = fetch_data(symbol=self.symbol, interval=self.interval, start_date=clamp_to_hour(from_date), end_date=clamp_to_hour(to_date))
         if len(df) < self.window_size:
             raise ValueError("Not enough data to make a prediction.")
         df_no_ts = df.drop(columns=["timestamp"])
@@ -64,8 +64,8 @@ class CryptoTrainer:
         
     def fetch_price_at(self, dt: datetime.datetime) -> dict:
         df = fetch_data(symbol=self.symbol, interval=self.interval,
-                        start_date=dt - datetime.timedelta(days=1),
-                        end_date=dt + datetime.timedelta(days=1))
+                        start_date=clamp_to_hour(dt - datetime.timedelta(days=1)),
+                        end_date=clamp_to_hour(dt + datetime.timedelta(days=1)))
         df = df.set_index("timestamp")
         nearest = df.iloc[df.index.get_indexer([dt], method="nearest")]
         return nearest.iloc[0].to_dict()

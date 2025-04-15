@@ -15,6 +15,7 @@ from pydantic import BaseModel
 from firestore import store_suggestion
 from fastapi import Request
 from basket import Basket
+from utils import rank_hot_pairs, clamp_to_hour
 
 load_dotenv()
 
@@ -81,7 +82,7 @@ async def llm_stream(symbol: str, user=Depends(get_current_user)):
         yield "<thinking>Fetching recent articles ...</thinking>"
         news_articles = get_all_news()
         yield "<thinking>Adding technical indicators ...</thinking>"
-        df = fetch_data(symbol=symbol, interval="4h", start_date=dt_from, end_date=dt_to)
+        df = fetch_data(symbol=symbol, interval="4h", start_date=clamp_to_hour(dt_from), end_date=clamp_to_hour(dt_to))
         df_with_indicators = add_technical_indicators(df)
         latest_row = df_with_indicators.iloc[-1]
         technical_snapshot = latest_row.drop(labels=["timestamp"]).to_dict()
@@ -114,7 +115,10 @@ async def llm_summary(user=Depends(get_current_user)):
         pairs = config.get("PAIRS")
         predict_days = config.get("PREDICT_DAYS", 30)
         interval = config.get("INTERVAL", "4h")
-        window_days = config.get("WINDOW_DAYS", 90)
+        window_days = config.get("WINDOW_DAYS", 90)        
+        all_pairs = config.get("PAIRS")
+        top_pairs = rank_hot_pairs(all_pairs, interval=interval, days=3)[:10]
+        pairs = top_pairs
         yield "<thinking>Predicting ...</thinking>"
         basket = Basket(pairs, interval=interval, days=window_days, predict_days=predict_days, train=False)
         results = basket.get_signals(datetime.datetime.now())                
@@ -125,7 +129,7 @@ async def llm_summary(user=Depends(get_current_user)):
         dt_to = datetime.datetime.now()
         technical_snapshots = {}
         for symbol in pairs:
-            df = fetch_data(symbol=symbol, interval="4h", start_date=dt_from, end_date=dt_to)
+            df = fetch_data(symbol=symbol, interval="4h", start_date=clamp_to_hour(dt_from), end_date=clamp_to_hour(dt_to))
             df_with_indicators = add_technical_indicators(df)
             latest_row = df_with_indicators.iloc[-1]
             technical_snapshot = latest_row.drop(labels=["timestamp"]).to_dict()

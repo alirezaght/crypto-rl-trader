@@ -1,15 +1,11 @@
-import requests
 import pandas as pd
 import datetime
 from joblib import Memory
 import ta
-from secret_manager import get_twelvedata_key
 from binance.client import Client
 import asyncio
-
-api_key = get_twelvedata_key()
-
-memory = Memory(location='./.cache', verbose=0)
+import numpy as np
+from redis_cache import redis_cache
 
 spinner = ["-", "\\", "|", "/"]
 spinner_index = 0
@@ -68,7 +64,11 @@ def get_binance_client():
         asyncio.set_event_loop(asyncio.new_event_loop())
     return Client(api_key=None, api_secret=None, tld="us")
 
-@memory.cache
+def clamp_to_hour(dt: datetime.datetime) -> datetime.datetime:
+    return dt.replace(minute=0, second=0, microsecond=0)
+
+
+@redis_cache(ttl=3600 * 24)
 def fetch_data(
     symbol="BTC/USD",
     interval="4h",
@@ -78,9 +78,10 @@ def fetch_data(
 ):
     symbol = symbol.replace("/", "").replace("USD","USDT").upper()
     print_spinner()
-
+        
     end_time = datetime.datetime.now() if end_date is None else end_date
     start_time = start_date if start_date else end_time - datetime.timedelta(days=lookback_days)
+    
     client = get_binance_client()
     
 
@@ -105,3 +106,60 @@ def fetch_data(
     df[["open", "high", "low", "close", "volume"]] = df[["open", "high", "low", "close", "volume"]].astype(float)
     df = df.sort_values("timestamp").reset_index(drop=True)
     return df
+
+
+
+def get_recent_data(symbol, interval, days=3):
+    dt_to = datetime.datetime.now()
+    dt_from = dt_to - datetime.timedelta(days=days)
+    return fetch_data(symbol, interval=interval, start_date=clamp_to_hour(dt_from), end_date=clamp_to_hour(dt_to))
+
+def get_pair_volume(symbol, interval, days=3):
+    df = get_recent_data(symbol, interval, days)
+    return df["volume"].sum()
+
+def get_pair_volatility(symbol, interval, days=3):
+    df = get_recent_data(symbol, interval, days)
+    return df["close"].pct_change().std()
+
+def get_recent_return(symbol, interval, days=3):
+    df = get_recent_data(symbol, interval, days)
+    return (df["close"].iloc[-1] - df["close"].iloc[0]) / df["close"].iloc[0]
+
+
+def rank_hot_pairs(pairs, interval, days=3):
+    scores = []
+    metrics = []
+
+    for symbol in pairs:
+        try:
+            volume = get_pair_volume(symbol, interval, days)
+            volatility = get_pair_volatility(symbol, interval, days)
+            recent_return = get_recent_return(symbol, interval, days)
+            metrics.append((symbol, volume, volatility, recent_return))
+        except Exception as e:
+            print(f"Skipping {symbol} due to error: {e}")
+
+    if not metrics:
+        return []
+
+    # Convert to NumPy arrays for normalization
+    symbols, volumes, volatilities, returns = zip(*metrics)
+    volumes = np.array(volumes)
+    volatilities = np.array(volatilities)
+    returns = np.array(returns)
+
+    # Normalize using min-max scaling
+    def normalize(arr):
+        return (arr - np.min(arr)) / (np.ptp(arr) + 1e-8)
+
+    vol_norm = normalize(volumes)
+    vola_norm = normalize(volatilities)
+    ret_norm = normalize(returns)
+
+    # Compute final score
+    for i, symbol in enumerate(symbols):
+        score = 0.4 * vol_norm[i] + 0.3 * vola_norm[i] + 0.3 * ret_norm[i]
+        scores.append((symbol, score))
+
+    return [s[0] for s in sorted(scores, key=lambda x: x[1], reverse=True)]

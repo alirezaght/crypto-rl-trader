@@ -17,3 +17,4 @@ lxml_html_clean
 groq
 pydantic
 python-binance
+redis

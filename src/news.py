@@ -2,10 +2,17 @@ import feedparser
 import requests
 from secret_manager import get_cryptopanic_key
 from newspaper import Article
+from redis_cache import redis_cache
+
 # RSS feed URLs
 RSS_FEEDS = {
     "Decrypt": "https://decrypt.co/feed",
     "CoinDesk": "https://www.coindesk.com/arc/outboundfeeds/rss/",
+    "CoinTelegraph": "https://cointelegraph.com/rss",    
+    "CryptoSlate": "https://cryptoslate.com/feed/",    
+    "NewsBTC": "https://www.newsbtc.com/feed/",    
+    "CryptoPotato": "https://cryptopotato.com/feed/",    
+    "AMBCrypto": "https://ambcrypto.com/feed/",
 }
 
 
@@ -14,11 +21,19 @@ CRYPTOPANIC_URL = f"https://cryptopanic.com/api/v1/posts/?auth_token={CRYPTOPANI
 
 
 def extract_article_text(url):
-    article = Article(url)
-    article.download()
-    article.parse()
-    return article.title, article.text
+    try:
+        article = Article(url)
+        article.download(input_html=requests.get(
+            url,
+            headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36"}
+        ).text)
+        article.parse()
+        return article.title, article.text
+    except Exception as e:
+        print(f"Failed to extract article: {e}")
+        return None, None
 
+@redis_cache(ttl=3600 * 4)  
 def fetch_rss(feed_url, source_name):
     response = requests.get(feed_url, allow_redirects=True)
     if response.status_code != 200:
@@ -36,6 +51,7 @@ def fetch_rss(feed_url, source_name):
         })
     return articles
 
+@redis_cache(ttl=3600 * 4)
 def fetch_cryptopanic():
     response = requests.get(CRYPTOPANIC_URL)
     data = response.json()
