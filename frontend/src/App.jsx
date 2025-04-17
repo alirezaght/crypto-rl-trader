@@ -192,6 +192,7 @@ export default function App() {
             const matches = [...chunk.matchAll(/<thinking>(.*?)<\/thinking>/g)]
             const lastThinking = matches[matches.length - 1]?.[1] || ''
             setThinking(lastThinking)
+            setLlmText(prev => "\n" + prev + "\n")
           } else {
             setThinking('')
             setLlmText(prev => prev + chunk)
@@ -421,29 +422,29 @@ export default function App() {
                     <>
                       <Box bg="gray" p={4} rounded="md" minH="40vh">
                         {streaming ? <Spinner color="gold" /> : (
-                          thinkingText ? (
-                            <>
-                              <Global
-                                styles={`
+                          <>
+                            <Box whiteSpace="pre-wrap">
+                              <ReactMarkdown>{llmText}</ReactMarkdown>
+                            </Box>
+                            <Global
+                              styles={`
                             @keyframes blink {
                               0%, 100% { opacity: 1; }
                               50% { opacity: 0.5; }
                             }
                           `}
-                              />
-                              <Text
-                                whiteSpace="pre-wrap"
-                                fontStyle="italic"
-                                color="thinking"
-                                animation="blink 1.5s ease-in-out infinite"
-                              >
-                                {thinkingText}
-                              </Text>
-                            </>
-                          ) : <Box whiteSpace="pre-wrap">
-                            <ReactMarkdown>{llmText}</ReactMarkdown>
-                          </Box>
-                        )}
+                            />
+                            <Text
+                              whiteSpace="pre-wrap"
+                              fontStyle="italic"
+                              color="thinking"
+                              animation="blink 1.5s ease-in-out infinite"
+                            >
+                              {thinkingText}
+                            </Text>
+                          </>
+                        )
+                        }
                       </Box>
                     </>
                   )}

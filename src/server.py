@@ -15,7 +15,7 @@ from pydantic import BaseModel
 from firestore import store_suggestion
 from fastapi import Request
 from basket import Basket
-from utils import rank_hot_pairs, clamp_to_hour
+from utils import rank_hot_pairs, clamp_to_hour, chunk_dict
 
 load_dotenv()
 
@@ -84,8 +84,8 @@ async def llm_stream(symbol: str, user=Depends(get_current_user)):
         yield "<thinking>Adding technical indicators ...</thinking>"
         df = fetch_data(symbol=symbol, interval="4h", start_date=clamp_to_hour(dt_from), end_date=clamp_to_hour(dt_to))
         df_with_indicators = add_technical_indicators(df)
-        latest_row = df_with_indicators.iloc[-1]
-        technical_snapshot = latest_row.drop(labels=["timestamp"]).to_dict()
+        latest_row = df_with_indicators.iloc[-18:].round(2)
+        technical_snapshot = latest_row
         
         
         for chunk in query_llm(symbol, action, technical_snapshot, news_articles):
@@ -131,14 +131,16 @@ async def llm_summary(user=Depends(get_current_user)):
         for symbol in pairs:
             df = fetch_data(symbol=symbol, interval="4h", start_date=clamp_to_hour(dt_from), end_date=clamp_to_hour(dt_to))
             df_with_indicators = add_technical_indicators(df)
-            latest_row = df_with_indicators.iloc[-1]
-            technical_snapshot = latest_row.drop(labels=["timestamp"]).to_dict()
-            technical_snapshots[symbol] = technical_snapshot
+            latest_row = df_with_indicators.iloc[-18:].round(2)
+            technical_snapshots[symbol] = latest_row
             
         yield "<thinking>Summarizing ...</thinking>"
-        
-        for chunk in query_llm_for_summary(technical_snapshots, news_articles, results):
-            yield chunk
+        for i, chunk in enumerate(chunk_dict(technical_snapshots, chunk_size=2)):
+            chunk_pairs = list(chunk.keys())
+            chunk_results = {k: results.get(k) for k in chunk_pairs}
+            yield f"<thinking>Summarizing ...</thinking>"
+            yield from query_llm_for_summary(chunk, news_articles, chunk_results)                             
+            yield "\n\n"
     
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")

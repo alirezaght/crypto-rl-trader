@@ -26,6 +26,11 @@ def print_spinner():
     print(f"\r{spinner[spinner_index]}", end="", flush=True)
     spinner_index = (spinner_index + 1) % len(spinner)
 
+def chunk_dict(d, chunk_size):
+    items = list(d.items())
+    for i in range(0, len(items), chunk_size):
+        yield dict(items[i:i + chunk_size])
+
 def add_technical_indicators(df):
     df = df.copy()
     close = df["close"]

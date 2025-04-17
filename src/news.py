@@ -34,14 +34,14 @@ def extract_article_text(url):
         return None, None
 
 @redis_cache(ttl=3600 * 4)  
-def fetch_rss(feed_url, source_name):
+def fetch_rss(feed_url, source_name, items):
     response = requests.get(feed_url, allow_redirects=True)
     if response.status_code != 200:
         print(f"Failed to fetch RSS from {source_name} - Status {response.status_code}")
         return []
     feed = feedparser.parse(response.content)
     articles = []
-    for entry in feed.entries[:5]: 
+    for entry in feed.entries[:items]: 
         articles.append({
             "source": source_name,
             "title": entry.title,
@@ -52,11 +52,11 @@ def fetch_rss(feed_url, source_name):
     return articles
 
 @redis_cache(ttl=3600 * 4)
-def fetch_cryptopanic():
+def fetch_cryptopanic(items):
     response = requests.get(CRYPTOPANIC_URL)
     data = response.json()
     articles = []
-    for item in data.get("results", [])[:5]:
+    for item in data.get("results", [])[:items]:
         articles.append({
             "source": "CryptoPanic",
             "title": item.get("title"),
@@ -69,8 +69,8 @@ def get_all_news():
     all_news = []
 
     for name, url in RSS_FEEDS.items():
-        all_news.extend(fetch_rss(url, name))
+        all_news.extend(fetch_rss(url, name, 2))
 
-    all_news.extend(fetch_cryptopanic())
+    all_news.extend(fetch_cryptopanic(5))
     return all_news
 

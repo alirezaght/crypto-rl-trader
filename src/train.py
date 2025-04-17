@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from utils import get_candle_count, fetch_data, clamp_to_hour
 import datetime
 from storage import download_from_gcs, gcs_file_exists, upload_to_gcs
+import os
 
 class CryptoTrainer:
     def __init__(self, symbol="BTCUSDT", interval="4h", days=90, predict_days = 30, train=True):
@@ -37,7 +38,7 @@ class CryptoTrainer:
             
             upload_to_gcs(self.model_path, f"models/{self.file_name}.zip")
             upload_to_gcs(self.vec_path, f"models/vec_{self.file_name}.pkl")
-        else:
+        elif not os.path.exists(self.model_path) or not os.path.exists(self.vec_path):
             print(f"Model exists for {self.symbol}. Downloading...")
             download_from_gcs(f"models/{self.file_name}.zip", self.model_path)
             download_from_gcs(f"models/vec_{self.file_name}.pkl", self.vec_path)
