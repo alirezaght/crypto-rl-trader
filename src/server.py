@@ -33,6 +33,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
+
+
 @app.get("/predict")
 async def predict(symbol: str, user=Depends(get_current_user)):    
     trainer = CryptoTrainer(symbol=symbol, interval=config.get("INTERVAL", "4h"), days=config.get("WINDOW_DAYS", 90), predict_days=config.get("PREDICT_DAYS", 30), train=False)
