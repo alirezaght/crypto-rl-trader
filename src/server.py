@@ -2,12 +2,12 @@ from fastapi import FastAPI
 import datetime
 from train import CryptoTrainer
 from dotenv import load_dotenv
-from main import config
+from main import get_config
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import Depends
 from security import get_current_user
 from fastapi import HTTPException
-from llm import query_llm, query_llm_for_summary
+from llm import query_llm
 from fastapi.responses import StreamingResponse
 from news import get_all_news
 from utils import add_technical_indicators, fetch_data
@@ -19,6 +19,7 @@ from utils import rank_hot_pairs, clamp_to_hour, chunk_dict
 import os
 import uvicorn
 import logging
+from firestore import init_firebase
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("Server")
 
@@ -56,6 +57,7 @@ async def predict(symbol: str, user=Depends(get_current_user)):
 
 @app.get("/config")
 async def available_pairs(user=Depends(get_current_user)):
+    config = get_config()
     pairs = config.get("PAIRS")
     predict_days = config.get("PREDICT_DAYS", 30)
     interval = config.get("INTERVAL", "4h")
@@ -69,6 +71,7 @@ async def available_pairs(user=Depends(get_current_user)):
     
 @app.get("/train")
 async def train(user=Depends(get_current_user)):    
+    config = get_config()
     if user.get("role") != "trainer":
         raise HTTPException(status_code=403, detail="Access denied: trainer role required")
     
@@ -82,9 +85,8 @@ async def train(user=Depends(get_current_user)):
     return {"results": results}
 
 
-@app.get("/llm-stream")
-async def llm_stream(symbol: str, user=Depends(get_current_user)):        
-    def event_generator():
+def event_generator(symbol):
+        config = get_config()
         yield "<thinking>Analyzing ...</thinking>"
         trainer = CryptoTrainer(symbol=symbol, interval=config.get("INTERVAL", "4h"), days=config.get("WINDOW_DAYS", 90), predict_days=config.get("PREDICT_DAYS", 30), train=False)        
         dt_from = datetime.datetime.now() - datetime.timedelta(days=config.get("WINDOW_DAYS", 90) + 14)
@@ -109,8 +111,10 @@ async def llm_stream(symbol: str, user=Depends(get_current_user)):
         
         for chunk in query_llm(symbol, action, technical_snapshot, news_articles):
             yield chunk
-    
 
+
+@app.get("/llm-stream")
+async def llm_stream(symbol: str, user=Depends(get_current_user)):                
     return StreamingResponse(event_generator(), media_type="text/event-stream")
 
 class PairSuggestion(BaseModel):
@@ -129,7 +133,8 @@ async def suggest_pair(data: PairSuggestion, request: Request, user=Depends(get_
 
 @app.get("/llm-summary")
 async def llm_summary(user=Depends(get_current_user)):
-    def event_generator():
+    def event_generator_summary():
+        config = get_config()
         yield "<thinking>Analyzing ...</thinking>"
         pairs = config.get("PAIRS")
         predict_days = config.get("PREDICT_DAYS", 30)
@@ -138,38 +143,11 @@ async def llm_summary(user=Depends(get_current_user)):
         all_pairs = config.get("PAIRS")
         top_pairs = rank_hot_pairs(all_pairs, interval=interval, days=3)[:10]
         pairs = top_pairs
-        yield "<thinking>Predicting ...</thinking>"
-        basket = Basket(pairs, interval=interval, days=window_days, predict_days=predict_days, train=False)
-        results = basket.get_signals(datetime.datetime.now())                
-        yield "<thinking>Fetching recent articles ...</thinking>"
-        news_articles = get_all_news()
-        yield "<thinking>Adding technical indicators ...</thinking>"
-        dt_from = datetime.datetime.now() - datetime.timedelta(days=window_days + 14)
-        dt_to = datetime.datetime.now()        
-        technical_snapshots = {}
         for symbol in pairs:
-            technical_snapshots[symbol] = {}
-            df = fetch_data(symbol=symbol, interval="1d", start_date=clamp_to_hour(dt_from), end_date=clamp_to_hour(dt_to))
-            df_with_indicators = add_technical_indicators(df)
-            latest_row = df_with_indicators.iloc[-1:].round(2)            
-            technical_snapshots[symbol]["1d"] = latest_row
-            
-            df = fetch_data(symbol=symbol, interval="1d", start_date=clamp_to_hour(dt_from), end_date=clamp_to_hour(dt_to - datetime.timedelta(days=7)))
-            df_with_indicators = add_technical_indicators(df)
-            latest_row = df_with_indicators.iloc[-1:].round(2)
-            technical_snapshots[symbol]["1w"] = latest_row
-            
-            
-        yield "<thinking>Summarizing ...</thinking>"
-        for i, chunk in enumerate(chunk_dict(technical_snapshots, chunk_size=3)):
-            chunk_pairs = list(chunk.keys())
-            chunk_results = {k: results.get(k) for k in chunk_pairs}
-            yield f"<thinking>Summarizing ...</thinking>"
-            yield from query_llm_for_summary(chunk, news_articles, chunk_results)                             
-            yield "\n\n"
+            yield from event_generator(symbol)
     
 
-    return StreamingResponse(event_generator(), media_type="text/event-stream")
+    return StreamingResponse(event_generator_summary(), media_type="text/event-stream")
 
 
 
@@ -180,4 +158,7 @@ async def llm_summary(user=Depends(get_current_user)):
 if __name__ == "__main__":
     logger.info("Bringing up....")
     port = int(os.environ.get("PORT", 8080))
+    init_firebase()
+    logger.info("Firebase loaded....")
     uvicorn.run(app, host="0.0.0.0", port=port)
+    

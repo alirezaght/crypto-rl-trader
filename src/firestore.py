@@ -1,6 +1,10 @@
-import firebase_admin
 from firebase_admin import credentials, firestore
 from typing import Dict, Any
+import firebase_admin
+
+
+def init_firebase():
+    firebase_admin.initialize_app(get_cred())
 
 _cred = None
 
@@ -13,8 +17,7 @@ def get_cred():
 _db = None
 def get_db():
     global _db
-    if _db is None:        
-        firebase_admin.initialize_app(get_cred())
+    if _db is None:                
         _db = firestore.client() 
     return _db
 

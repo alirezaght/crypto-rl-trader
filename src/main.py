@@ -4,17 +4,21 @@ import json
 from datetime import datetime
 from dotenv import load_dotenv
 from firestore import fetch_config
-from news import get_all_news
 
 load_dotenv()
-config = fetch_config()
 
-INTERVAL = config.get("INTERVAL", "4h")
-WINDOW_DAYS = int(config.get("WINDOW_DAYS", 90))
-PREDICT_DAYS = int(config.get("PREDICT_DAYS", 30))
-PAIRS = config.get("PAIRS", [])
+def get_config():
+    return fetch_config()
+
 
 def main():
+    
+    config = get_config()
+    INTERVAL = config.get("INTERVAL", "4h")
+    WINDOW_DAYS = int(config.get("WINDOW_DAYS", 90))
+    PREDICT_DAYS = int(config.get("PREDICT_DAYS", 30))
+    PAIRS = config.get("PAIRS", [])
+    
     parser = argparse.ArgumentParser()
     parser.add_argument("--backtrack", action="store_true", default=False, help="Backtrack mode")
     parser.add_argument("--start", type=str, default=datetime.now(), help="Start date (e.g. 2025-01-01)")
@@ -26,7 +30,7 @@ def main():
         if not (args.start and args.end and args.deposit is not None):
             parser.error("--backtrack requires --start, --end, and --deposit.")
             
-            
+    
     basket = Basket(PAIRS, interval=INTERVAL, days=WINDOW_DAYS, predict_days=PREDICT_DAYS)
     
     if args.backtrack:        

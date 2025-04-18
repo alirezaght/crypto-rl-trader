@@ -64,92 +64,12 @@ Return only the final decision and reason, no additional commentary.
     return prompt.strip()
 
 
-
-def build_llm_prompt_for_summary(
-    technical_indicators: Dict[str, Dict], 
-    news_articles: list, 
-    results: Dict
-) -> str:
-    
-    technical_prompt = ""
-    for symbol, indicators in technical_indicators.items():
-        technical_prompt += f"""
-📊 {symbol} Indicators (for current day, last week, both with interval 1d):
-RSI: {indicators["1d"]['rsi']}, {indicators["1w"]['rsi']}
-MACD: {indicators["1d"]['macd']}, {indicators["1w"]['macd']}
-MACD Signal: {indicators["1d"]['macd_signal']}, {indicators["1w"]['macd_signal']}
-EMA 20: {indicators["1d"]['ema_20']}, {indicators["1w"]['ema_20']}
-EMA 50: {indicators["1d"]['ema_50']}, {indicators["1w"]['ema_50']}
-Stochastic K: {indicators["1d"]['stoch_k']}, {indicators["1w"]['stoch_k']}
-Stochastic D: {indicators["1d"]['stoch_d']}, {indicators["1w"]['stoch_d']}
-ROC: {indicators["1d"]['roc']}, {indicators["1w"]['roc']}
-ADX: {indicators["1d"]['adx']}, {indicators["1w"]['adx']}
-Bollinger MA: {indicators["1d"]['bollinger_mavg']}, {indicators["1w"]['bollinger_mavg']}
-Bollinger Upper: {indicators["1d"]['bollinger_hband']}, {indicators["1w"]['bollinger_hband']}
-Bollinger Lower: {indicators["1d"]['bollinger_lband']}, {indicators["1w"]['bollinger_lband']}
-ATR: {indicators["1d"]['atr']}, {indicators["1w"]['atr']}
-OBV: {indicators["1d"]['obv']}, {indicators["1w"]['obv']}
-
-"""
-
-    news_prompt = ""
-    for article in news_articles:
-        news_prompt += f"- {article['title']} ({article['source']}, {article['published']})\n"
-        if article.get("content"):
-            news_prompt += f"  {article['content'][:300]}...\n"
-
-    prompt = f"""
-You are a confident, crypto trading assistant. Do not include introductions, disclaimers, or meta-comments.
-
-For each pair below, analyze the technical indicators, reinforcement learning signal, and news headlines. Use relevant news if it provides meaningful insight. always mention RL agent result.
-
-Output format (MUST be followed exactly):
-
-**SYMBOL: ACTION**
-<3-5 sentence explanation using technical indicators, RL signal, and/or news. Use full sentence.>
----
-Example:
-**BTC/USD: BUY**
-RSI and MACD both show bullish momentum. OBV is rising steadily.  
-Recent ETF approval has also positively influenced sentiment.
-
-**ETH/USD: SELL**
-Bearish crossover in Stochastic Oscillator and declining RSI.  
-Recent news suggests potential regulatory pressure in the short term.
-
----
-Rules (must be followed exactly):  
-- Never combine multiple results into a single paragraph  
-- DO NOT include any introductions, summaries, or closing statements
-- ONLY return the formatted list of results. Nothing else.
----
-🧠 RL Agent Suggestions:
-{results}
-
-{technical_prompt}
-📰 News Headlines:
-{news_prompt}
-
----
-""".strip()
-
-    return prompt
-
-
-
-
 def query_llm(symbol: str, rl_action: int, technical_indicators: dict, news_articles: list):
     system_prompt = build_llm_prompt(symbol, rl_action, technical_indicators, news_articles)
     user_prompt = f"Give me the signal to buy, sell or hold for {symbol}."
     yield from query(system_prompt, user_prompt)
     
     
-def query_llm_for_summary(technical_indicators: dict, news_articles: list, results: Dict):
-    system_prompt = build_llm_prompt_for_summary(technical_indicators, news_articles, results)
-    user_prompt = f"Give me the signal to buy, sell or hold for each symbol."
-    yield from query(system_prompt, user_prompt)
-            
-            
 def query(system_prompt: str, user_prompt: str):
     stream = client.chat.completions.create(
         model="llama3-70b-8192",
