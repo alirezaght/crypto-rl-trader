@@ -177,8 +177,7 @@ async def llm_summary(user=Depends(get_current_user)):
 
 
 
-
 if __name__ == "__main__":
     logger.info("Bringing up....")
     port = int(os.environ.get("PORT", 8080))
-    uvicorn.run("server:app", host="0.0.0.0", port=port)
+    uvicorn.run(app, host="0.0.0.0", port=port)
