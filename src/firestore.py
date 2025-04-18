@@ -2,14 +2,24 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 from typing import Dict, Any
 
+_cred = None
 
-cred = credentials.Certificate("./serviceAccountKey.json")
-firebase_admin.initialize_app(cred)
+def get_cred():
+    global _cred
+    if _cred is None:
+        _cred = credentials.Certificate("./serviceAccountKey.json")
+    return _cred
 
-db = firestore.client() 
+_db = None
+def get_db():
+    global _db
+    if _db is None:        
+        firebase_admin.initialize_app(get_cred())
+        _db = firestore.client() 
+    return _db
 
 def fetch_config() -> Dict[str, Any]:
-    doc_ref = db.collection("config").document("default")
+    doc_ref = get_db().collection("config").document("default")
     doc = doc_ref.get()
     if not doc.exists:
         raise ValueError("No config document found in Firestore.")
@@ -17,7 +27,7 @@ def fetch_config() -> Dict[str, Any]:
 
 
 def store_suggestion(pair: str, ip: str) -> None:
-    suggestion_ref = db.collection("pair_suggestions").document()
+    suggestion_ref = get_db().collection("pair_suggestions").document()
     suggestion_ref.set({
         "pair": pair,
         "ip": ip,
