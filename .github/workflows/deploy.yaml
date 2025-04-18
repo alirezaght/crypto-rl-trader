@@ -36,7 +36,7 @@ jobs:
           --region ${{ secrets.REGION }} \
           --platform managed \
           --allow-unauthenticated \
-          --port 8000 \
+          --port 8080 \
           --memory 1Gi
 
     - name: Clean up service account key

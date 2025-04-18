@@ -13,7 +13,7 @@ RUN pip install -r requirements.txt
 
 COPY . /app
 
-EXPOSE 8000
+EXPOSE 8080
 ENV PYTHONPATH=/app/src
 
-CMD ["uvicorn", "src.server:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "src.server:app", "--host", "0.0.0.0", "--port", "8080"]

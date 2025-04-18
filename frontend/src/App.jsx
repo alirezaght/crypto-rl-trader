@@ -51,7 +51,7 @@ const firebaseConfig = {
 }
 
 const appUrl = "https://app.synapsignal.com"
-// const appUrl = "http://localhost:8000"
+// const appUrl = "http://localhost:8080"
 
 const app = initializeApp(firebaseConfig)
 const auth = getAuth(app)
