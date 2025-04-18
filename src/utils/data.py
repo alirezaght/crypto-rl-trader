@@ -1,11 +1,10 @@
 import pandas as pd
 import datetime
-from joblib import Memory
 import ta
 from binance.client import Client
 import asyncio
 import numpy as np
-from redis_cache import redis_cache
+from utils.redis_cache import redis_cache
 
 spinner = ["-", "\\", "|", "/"]
 spinner_index = 0
@@ -168,3 +167,5 @@ def rank_hot_pairs(pairs, interval, days=3):
         scores.append((symbol, score))
 
     return [s[0] for s in sorted(scores, key=lambda x: x[1], reverse=True)]
+
+

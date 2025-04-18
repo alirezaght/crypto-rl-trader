@@ -17,15 +17,11 @@ import {
   IconButton,
   Flex,
   Spinner,
-  Menu,
-  MenuButton,
-  MenuList,
-  MenuItem,
 } from '@chakra-ui/react'
 import { FaGoogle } from 'react-icons/fa'
 import logo from './assets/logo.png'
 import { Image } from '@chakra-ui/react'
-import { HamburgerIcon, ChevronDownIcon } from '@chakra-ui/icons'
+import { HamburgerIcon } from '@chakra-ui/icons'
 import ReactMarkdown from 'react-markdown'
 import { initializeApp } from 'firebase/app'
 import {
@@ -50,8 +46,9 @@ const firebaseConfig = {
   measurementId: "G-ZY38R9FRE4"
 }
 
-const appUrl = "https://app.synapsignal.com"
-// const appUrl = "http://localhost:8080"
+
+const appUrl = process.env.REACT_APP_API_URL
+
 
 const app = initializeApp(firebaseConfig)
 const auth = getAuth(app)
@@ -326,28 +323,46 @@ export default function App() {
                     </>
                   )}
                   <Flex justify="left" align={"center"} >
-                    <Menu>
-                      <MenuButton as={Button}
-                        minW="200px"
-                        rightIcon={<ChevronDownIcon />} mb={4} colorScheme="gold" color="black" bg="gold">
-                        {selectedPair || "Select a crypto pair"}
-                      </MenuButton>
-                      <MenuList bg="black" color="text" borderColor="border">
-                        {config?.pairs.map(pair => (
-                          <MenuItem
-                            key={pair}
-                            bg="black"
-                            _hover={{ bg: 'gray', color: 'gold' }}
-                            onClick={() => {
-                              setSelectedPair(pair)
-                              fetchLLMStream(pair)
-                            }}
-                          >
-                            {pair}
-                          </MenuItem>
-                        ))}
-                      </MenuList>
-                    </Menu>
+                    <Box mt={4}>
+                      <Input
+                        placeholder="Search a crypto pair"
+                        value={selectedPair}
+                        onChange={(e) => {
+                          setSelectedPair(e.target.value)
+                        }}
+                        bg="gold"
+                        color="black"
+                        _hover={{ borderColor: "gold" }}
+                        _focus={{
+                          borderColor: "gold", boxShadow: "0 0 0 1px gold", // prevent blue glow
+                          outline: "none"
+                        }}
+                        borderColor="gold"
+                      />
+                      <Box bg="black" mt={1} rounded="md" maxH="200px" overflowY="auto">
+                        {config?.pairs
+                          .filter(pair =>
+                            pair.toLowerCase().includes(selectedPair.toLowerCase()) &&
+                            selectedPair !== "" &&
+                            pair !== selectedPair
+                          )
+                          .slice(0, 10)
+                          .map(pair => (
+                            <Box
+                              key={pair}
+                              px={4}
+                              py={2}
+                              _hover={{ bg: 'gray', color: 'gold', cursor: 'pointer' }}
+                              onClick={() => {
+                                setSelectedPair(pair)
+                                fetchLLMStream(pair)
+                              }}
+                            >
+                              {pair}
+                            </Box>
+                          ))}
+                      </Box>
+                    </Box>
                   </Flex>
 
                   {!llmPage && (

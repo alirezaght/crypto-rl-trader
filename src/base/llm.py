@@ -1,7 +1,11 @@
-from secret_manager import get_groq_key
-import requests
+from utils.secret_manager import get_groq_key
 from groq import Groq
-from typing import List, Dict, Optional
+from config_manager.config import Config
+from training.train import CryptoTrainer
+import datetime
+from utils.news import get_all_news
+from utils.data import fetch_data, add_technical_indicators, clamp_to_hour
+from typing import Generator
 
 client = Groq(api_key=get_groq_key().strip())
 
@@ -83,3 +87,31 @@ def query(system_prompt: str, user_prompt: str):
     for chunk in stream:
         if chunk.choices and chunk.choices[0].delta.content:
             yield chunk.choices[0].delta.content
+            
+            
+            
+def query_for_symbol(symbol: str, config: Config) -> Generator[str, None, None]:        
+        yield "<thinking>Analyzing ...</thinking>"
+        trainer = CryptoTrainer(symbol=symbol, interval=config.INTERVAL, days=config.WINDOW_DAYS, predict_days=config.PREDICT_DAYS, train=False)        
+        dt_from = datetime.datetime.now() - datetime.timedelta(days=config.WINDOW_DAYS + 14)
+        dt_to = datetime.datetime.now()
+        yield "<thinking>Fetching historical data ...</thinking>"
+        action = trainer.predict(dt_from, dt_to)
+        yield "<thinking>Fetching recent articles ...</thinking>"
+        news_articles = get_all_news()
+        yield "<thinking>Adding technical indicators ...</thinking>"
+        technical_snapshot = {}
+        df = fetch_data(symbol=symbol, interval="1d", start_date=clamp_to_hour(dt_from), end_date=clamp_to_hour(dt_to))
+        df_with_indicators = add_technical_indicators(df)
+        latest_row = df_with_indicators.iloc[-1:].round(2)        
+        technical_snapshot["1d"] = latest_row
+        
+        df = fetch_data(symbol=symbol, interval="1d", start_date=clamp_to_hour(dt_from), end_date=clamp_to_hour(dt_to - datetime.timedelta(days=7)))
+        df_with_indicators = add_technical_indicators(df)
+        latest_row = df_with_indicators.iloc[-1:].round(2)
+        technical_snapshot["1w"] = latest_row
+        
+        
+        
+        for chunk in query_llm(symbol, action, technical_snapshot, news_articles):
+            yield chunk

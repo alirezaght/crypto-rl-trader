@@ -2,7 +2,7 @@ import gymnasium as gym
 from gymnasium import spaces
 import numpy as np
 import pandas as pd
-from utils import add_technical_indicators
+from utils.data import add_technical_indicators
 
 class CryptoPredictionEnv(gym.Env):
     def __init__(self, df: pd.DataFrame, window_size=90, prediction_horizon=30):

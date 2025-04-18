@@ -1,14 +1,12 @@
 import argparse
-from basket import Basket
+from training.basket import Basket
 import json
 from datetime import datetime
 from dotenv import load_dotenv
-from firestore import fetch_config
-
+from config_manager.config import get_config
 load_dotenv()
 
-def get_config():
-    return fetch_config()
+
 
 
 def main():

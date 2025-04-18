@@ -1,6 +1,6 @@
 from google.cloud import storage
-from secret_manager import project_id
-from firestore import get_cred
+from utils.secret_manager import project_id
+from db.firestore import get_cred
 bucket_name = "tradepulse-bucket"
 
 _client = None

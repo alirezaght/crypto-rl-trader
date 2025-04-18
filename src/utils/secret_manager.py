@@ -1,5 +1,5 @@
 from google.cloud import secretmanager
-from firestore import get_cred
+from db.firestore import get_cred
 project_id = "silver-treat-456607-e6"
 
 _client = None

@@ -1,8 +1,8 @@
 import datetime
 import pandas as pd
 from typing import List, Dict
-from train import CryptoTrainer
-from utils import interval_to_hours, print_spinner
+from training.train import CryptoTrainer
+from utils.data import interval_to_hours, print_spinner
 
 
 

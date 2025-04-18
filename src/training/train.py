@@ -1,11 +1,11 @@
 from stable_baselines3 import PPO
 from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize
 import numpy as np
-from crypto_env import CryptoPredictionEnv
+from training.crypto_env import CryptoPredictionEnv
 import matplotlib.pyplot as plt
-from utils import get_candle_count, fetch_data, clamp_to_hour
+from utils.data import get_candle_count, fetch_data, clamp_to_hour
 import datetime
-from storage import download_from_gcs, gcs_file_exists, upload_to_gcs
+from utils.storage import download_from_gcs, gcs_file_exists, upload_to_gcs
 import os
 
 class CryptoTrainer:

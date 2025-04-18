@@ -1,7 +1,7 @@
 import redis
 import hashlib
 import pickle
-from secret_manager import get_redis_key
+from utils.secret_manager import get_redis_key
 
 _redis_client = None
 

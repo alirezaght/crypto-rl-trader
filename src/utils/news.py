@@ -1,8 +1,8 @@
 import feedparser
 import requests
-from secret_manager import get_cryptopanic_key
+from utils.secret_manager import get_cryptopanic_key
 from newspaper import Article
-from redis_cache import redis_cache
+from utils.redis_cache import redis_cache
 
 # RSS feed URLs
 RSS_FEEDS = {
