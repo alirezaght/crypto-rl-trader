@@ -14,6 +14,5 @@ RUN pip install -r requirements.txt
 COPY . /app
 
 EXPOSE 8080
-ENV PYTHONPATH=/app/src
 
-ENTRYPOINT ["uvicorn", "src.server:app", "--host", "0.0.0.0", "--port", "8080"]
+ENTRYPOINT ["python", "src/server.py"]

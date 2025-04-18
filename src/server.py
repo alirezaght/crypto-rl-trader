@@ -16,6 +16,11 @@ from firestore import store_suggestion
 from fastapi import Request
 from basket import Basket
 from utils import rank_hot_pairs, clamp_to_hour, chunk_dict
+import os
+import uvicorn
+import logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("Server")
 
 load_dotenv()
 
@@ -165,3 +170,15 @@ async def llm_summary(user=Depends(get_current_user)):
     
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")
+
+
+
+
+
+
+
+
+if __name__ == "__main__":
+    logger.info("Bringing up....")
+    port = int(os.environ.get("PORT", 8080))
+    uvicorn.run("server:app", host="0.0.0.0", port=port)
