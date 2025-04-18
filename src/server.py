@@ -82,10 +82,17 @@ async def llm_stream(symbol: str, user=Depends(get_current_user)):
         yield "<thinking>Fetching recent articles ...</thinking>"
         news_articles = get_all_news()
         yield "<thinking>Adding technical indicators ...</thinking>"
-        df = fetch_data(symbol=symbol, interval="4h", start_date=clamp_to_hour(dt_from), end_date=clamp_to_hour(dt_to))
+        technical_snapshot = {}
+        df = fetch_data(symbol=symbol, interval="1d", start_date=clamp_to_hour(dt_from), end_date=clamp_to_hour(dt_to))
         df_with_indicators = add_technical_indicators(df)
-        latest_row = df_with_indicators.iloc[-18:].round(2)
-        technical_snapshot = latest_row
+        latest_row = df_with_indicators.iloc[-1:].round(2)        
+        technical_snapshot["1d"] = latest_row
+        
+        df = fetch_data(symbol=symbol, interval="1d", start_date=clamp_to_hour(dt_from), end_date=clamp_to_hour(dt_to - datetime.timedelta(days=7)))
+        df_with_indicators = add_technical_indicators(df)
+        latest_row = df_with_indicators.iloc[-1:].round(2)
+        technical_snapshot["1w"] = latest_row
+        
         
         
         for chunk in query_llm(symbol, action, technical_snapshot, news_articles):
@@ -126,16 +133,23 @@ async def llm_summary(user=Depends(get_current_user)):
         news_articles = get_all_news()
         yield "<thinking>Adding technical indicators ...</thinking>"
         dt_from = datetime.datetime.now() - datetime.timedelta(days=window_days + 14)
-        dt_to = datetime.datetime.now()
+        dt_to = datetime.datetime.now()        
         technical_snapshots = {}
         for symbol in pairs:
-            df = fetch_data(symbol=symbol, interval="4h", start_date=clamp_to_hour(dt_from), end_date=clamp_to_hour(dt_to))
+            technical_snapshots[symbol] = {}
+            df = fetch_data(symbol=symbol, interval="1d", start_date=clamp_to_hour(dt_from), end_date=clamp_to_hour(dt_to))
             df_with_indicators = add_technical_indicators(df)
-            latest_row = df_with_indicators.iloc[-18:].round(2)
-            technical_snapshots[symbol] = latest_row
+            latest_row = df_with_indicators.iloc[-1:].round(2)            
+            technical_snapshots[symbol]["1d"] = latest_row
+            
+            df = fetch_data(symbol=symbol, interval="1d", start_date=clamp_to_hour(dt_from), end_date=clamp_to_hour(dt_to - datetime.timedelta(days=7)))
+            df_with_indicators = add_technical_indicators(df)
+            latest_row = df_with_indicators.iloc[-1:].round(2)
+            technical_snapshots[symbol]["1w"] = latest_row
+            
             
         yield "<thinking>Summarizing ...</thinking>"
-        for i, chunk in enumerate(chunk_dict(technical_snapshots, chunk_size=2)):
+        for i, chunk in enumerate(chunk_dict(technical_snapshots, chunk_size=3)):
             chunk_pairs = list(chunk.keys())
             chunk_results = {k: results.get(k) for k in chunk_pairs}
             yield f"<thinking>Summarizing ...</thinking>"

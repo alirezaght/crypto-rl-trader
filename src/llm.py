@@ -23,7 +23,7 @@ You are a confident, concise crypto trading assistant. Do not include introducti
 
 Analyze the following data and output one clear action: **BUY**, **SELL**, or **HOLD** — with a brief explanation that may reference relevant indicators or news.
 
-Output must be in this format:
+Output format (must be followed exactly):
 
 **{symbol}: ACTION**
 <2-3 paragraphs explanation based on technicals, RL signal, and news>
@@ -32,21 +32,21 @@ Output must be in this format:
 🧠 RL Agent Suggestion:  
 {action_descriptions[rl_action]}
 
-📊 Technical Indicators (last few 4h intervals):  
-RSI: {technical_indicators['rsi']}  
-MACD: {technical_indicators['macd']}  
-MACD Signal: {technical_indicators['macd_signal']}  
-EMA 20: {technical_indicators['ema_20']}  
-EMA 50: {technical_indicators['ema_50']}  
-Stochastic K: {technical_indicators['stoch_k']}  
-Stochastic D: {technical_indicators['stoch_d']}  
-ROC: {technical_indicators['roc']}  
-ADX: {technical_indicators['adx']}  
-Bollinger MA: {technical_indicators['bollinger_mavg']}  
-Bollinger Upper: {technical_indicators['bollinger_hband']}  
-Bollinger Lower: {technical_indicators['bollinger_lband']}  
-ATR: {technical_indicators['atr']}  
-OBV: {technical_indicators['obv']}
+📊 Technical Indicators (for current day, last week, both with interval 1d):  
+RSI: {technical_indicators["1d"]['rsi']}, {technical_indicators["1w"]['rsi']}  
+MACD: {technical_indicators["1d"]['macd']}, {technical_indicators["1w"]['macd']}  
+MACD Signal: {technical_indicators["1d"]['macd_signal']}, {technical_indicators["1w"]['macd_signal']}  
+EMA 20: {technical_indicators["1d"]['ema_20']}, {technical_indicators["1w"]['ema_20']}  
+EMA 50: {technical_indicators["1d"]['ema_50']}, {technical_indicators["1w"]['ema_50']}  
+Stochastic K: {technical_indicators["1d"]['stoch_k']}, {technical_indicators["1w"]['stoch_k']}  
+Stochastic D: {technical_indicators["1d"]['stoch_d']}, {technical_indicators["1w"]['stoch_d']} 
+ROC: {technical_indicators["1d"]['roc']}, {technical_indicators["1w"]['roc']}  
+ADX: {technical_indicators["1d"]['adx']}, {technical_indicators["1w"]['adx']}  
+Bollinger MA: {technical_indicators["1d"]['bollinger_mavg']}, {technical_indicators["1w"]['bollinger_mavg']}  
+Bollinger Upper: {technical_indicators["1d"]['bollinger_hband']}, {technical_indicators["1w"]['bollinger_hband']}  
+Bollinger Lower: {technical_indicators["1d"]['bollinger_lband']}, {technical_indicators["1w"]['bollinger_lband']}  
+ATR: {technical_indicators["1d"]['atr']}, {technical_indicators["1w"]['atr']}  
+OBV: {technical_indicators["1d"]['obv']}, {technical_indicators["1w"]['obv']}
 
 📰 Relevant News (include in your decision if applicable):  
 """
@@ -74,21 +74,21 @@ def build_llm_prompt_for_summary(
     technical_prompt = ""
     for symbol, indicators in technical_indicators.items():
         technical_prompt += f"""
-📊 {symbol} Indicators (4h intervals):
-RSI: {indicators['rsi']}
-MACD: {indicators['macd']}
-MACD Signal: {indicators['macd_signal']}
-EMA 20: {indicators['ema_20']}
-EMA 50: {indicators['ema_50']}
-Stochastic K: {indicators['stoch_k']}
-Stochastic D: {indicators['stoch_d']}
-ROC: {indicators['roc']}
-ADX: {indicators['adx']}
-Bollinger MA: {indicators['bollinger_mavg']}
-Bollinger Upper: {indicators['bollinger_hband']}
-Bollinger Lower: {indicators['bollinger_lband']}
-ATR: {indicators['atr']}
-OBV: {indicators['obv']}
+📊 {symbol} Indicators (for current day, last week, both with interval 1d):
+RSI: {indicators["1d"]['rsi']}, {indicators["1w"]['rsi']}
+MACD: {indicators["1d"]['macd']}, {indicators["1w"]['macd']}
+MACD Signal: {indicators["1d"]['macd_signal']}, {indicators["1w"]['macd_signal']}
+EMA 20: {indicators["1d"]['ema_20']}, {indicators["1w"]['ema_20']}
+EMA 50: {indicators["1d"]['ema_50']}, {indicators["1w"]['ema_50']}
+Stochastic K: {indicators["1d"]['stoch_k']}, {indicators["1w"]['stoch_k']}
+Stochastic D: {indicators["1d"]['stoch_d']}, {indicators["1w"]['stoch_d']}
+ROC: {indicators["1d"]['roc']}, {indicators["1w"]['roc']}
+ADX: {indicators["1d"]['adx']}, {indicators["1w"]['adx']}
+Bollinger MA: {indicators["1d"]['bollinger_mavg']}, {indicators["1w"]['bollinger_mavg']}
+Bollinger Upper: {indicators["1d"]['bollinger_hband']}, {indicators["1w"]['bollinger_hband']}
+Bollinger Lower: {indicators["1d"]['bollinger_lband']}, {indicators["1w"]['bollinger_lband']}
+ATR: {indicators["1d"]['atr']}, {indicators["1w"]['atr']}
+OBV: {indicators["1d"]['obv']}, {indicators["1w"]['obv']}
 
 """
 
@@ -99,11 +99,11 @@ OBV: {indicators['obv']}
             news_prompt += f"  {article['content'][:300]}...\n"
 
     prompt = f"""
-You are a confident, concise crypto trading assistant. Do not include introductions, disclaimers, or meta-comments.
+You are a confident, crypto trading assistant. Do not include introductions, disclaimers, or meta-comments.
 
-For each pair below, analyze the technical indicators, reinforcement learning signal, and news headlines. Use relevant news if it provides meaningful insight.
+For each pair below, analyze the technical indicators, reinforcement learning signal, and news headlines. Use relevant news if it provides meaningful insight. always mention RL agent result.
 
-Format exactly like this:
+Output format (MUST be followed exactly):
 
 **SYMBOL: ACTION**
 <3-5 sentence explanation using technical indicators, RL signal, and/or news. Use full sentence.>
