@@ -63,23 +63,61 @@ class CryptoPredictionEnv(gym.Env):
     def _calculate_reward(self, action, max_pct_change, min_pct_change):
         if action == 0:  # HOLD
             volatility = abs(max_pct_change - min_pct_change)
-            if volatility < 0.1:
-                return 0.1  # low-volatility, passive reward
-            return -0.1
+            if volatility < 0.2:
+                return 1  
+            return -1
+        
+        
+        if action == 1:
+            if max_pct_change >= 0.25 and max_pct_change < 0.5:
+                return 1
+            elif max_pct_change > 0.20:
+                return abs(max_pct_change - 0.20)            
+            else:
+                return -1
+            
+        if action == 2:
+            if max_pct_change >= 0.5 and max_pct_change < 0.75:
+                return 1
+            elif max_pct_change > 0.45:
+                return abs(max_pct_change - 0.45)            
+            else:
+                return -1
+            
+        if action == 3:
+            if max_pct_change >= 0.75 and max_pct_change <= 1:
+                return 1
+            elif max_pct_change > 0.70:
+                return abs(max_pct_change - 0.70)            
+            else:
+                return -1
 
-        if action in [1, 2, 3]:  # BUY actions
-            expected_gain = max_pct_change
-            size_multiplier = [0.25, 0.5, 1.0][action - 1]
-            if expected_gain > 0:
-                return (expected_gain) * size_multiplier
-            return - size_multiplier
-
-        if action in [4, 5, 6]:  # SELL actions
-            expected_loss = min_pct_change
-            size_multiplier = [0.25, 0.5, 1.0][action - 4]
-            if expected_loss < 0:
-                return abs(expected_loss) * size_multiplier
-            return - size_multiplier
+        if action == 4:
+            change = abs(min_pct_change)
+            if change >= 0.25 and change < 0.5:
+                return 1
+            elif change > 0.20:
+                return abs(change - 0.20)            
+            else:
+                return -1
+            
+        if action == 5:
+            change = abs(min_pct_change)
+            if change >= 0.50 and change < 0.75:
+                return 1
+            elif change > 0.45:
+                return abs(change - 0.45)            
+            else:
+                return -1
+            
+        if action == 6:
+            change = abs(min_pct_change)
+            if change >= 0.75 and change <= 1:
+                return 1
+            elif change > 0.70:
+                return abs(change - 0.70)            
+            else:
+                return -1        
 
         return -1.0
 

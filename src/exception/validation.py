@@ -22,3 +22,10 @@ def register_validation_handlers(app: FastAPI):
             status_code=422,
             content={"detail": exc.errors()},
         )
+        
+    @app.exception_handler(ValueError)
+    async def value_error_handler(request: Request, exc: ValueError):
+        return JSONResponse(
+            status_code=400,
+            content={"detail": str(exc)},
+        )

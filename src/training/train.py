@@ -1,7 +1,7 @@
 from stable_baselines3 import PPO
 from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize
 import numpy as np
-from training.crypto_env import CryptoPredictionEnv
+from .crypto_env import CryptoPredictionEnv
 import matplotlib.pyplot as plt
 from utils.data import get_candle_count, fetch_data, clamp_to_hour
 import datetime

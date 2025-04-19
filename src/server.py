@@ -1,8 +1,6 @@
 from fastapi import FastAPI
 from dotenv import load_dotenv
 from fastapi.middleware.cors import CORSMiddleware
-import os
-import uvicorn
 import logging
 from db.firestore import init_firebase
 from base.middleware.request import RequestContextMiddleware

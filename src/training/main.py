@@ -4,6 +4,7 @@ import json
 from datetime import datetime
 from dotenv import load_dotenv
 from config_manager.config import get_config
+from db.firestore import init_firebase
 load_dotenv()
 
 
@@ -12,10 +13,12 @@ load_dotenv()
 def main():
     
     config = get_config()
-    INTERVAL = config.get("INTERVAL", "4h")
-    WINDOW_DAYS = int(config.get("WINDOW_DAYS", 90))
-    PREDICT_DAYS = int(config.get("PREDICT_DAYS", 30))
-    PAIRS = config.get("PAIRS", [])
+    INTERVAL = config.INTERVAL
+    WINDOW_DAYS = int(config.WINDOW_DAYS)
+    # PREDICT_DAYS = int(config.PREDICT_DAYS)
+    PREDICT_DAYS = 14
+    PAIRS = config.PAIRS
+    PAIRS = ["BTC/USD"]
     
     parser = argparse.ArgumentParser()
     parser.add_argument("--backtrack", action="store_true", default=False, help="Backtrack mode")
@@ -43,7 +46,8 @@ def main():
         print("Signals for current date:")
         print(json.dumps(results, indent=4))
 
-if __name__ == "__main__":    
+if __name__ == "__main__":   
+    init_firebase()
     main()
 
 
