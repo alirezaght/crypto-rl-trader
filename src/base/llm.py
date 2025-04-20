@@ -115,7 +115,7 @@ class BaseLLM(BaseActionProtected):
             yield "<thinking>Analyzing ...</thinking>"
             config = get_config("crypto" if "/" in symbol else "stock")
             trainer = CryptoTrainer(symbol=symbol, interval=config.interval, days=config.window_days, predict_days=config.predict_days, train=False)        
-            dt_from = datetime.datetime.now() - datetime.timedelta(days=config.window_days + 14)
+            dt_from = datetime.datetime.now() - datetime.timedelta(days=config.window_days * 3)
             dt_to = datetime.datetime.now()
             yield "<thinking>Fetching historical data ...</thinking>"
             rl_result = trainer.predict(dt_from, dt_to)

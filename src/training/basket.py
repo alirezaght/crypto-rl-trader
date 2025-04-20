@@ -34,7 +34,7 @@ class Basket:
             try:
                 window_days = self.crypto_config.window_days if "/" in symbol else self.stock_config.window_days
                 action, confidence = trainer.predict(
-                    from_date=at_datetime - datetime.timedelta(days=window_days + 14),
+                    from_date=at_datetime - datetime.timedelta(days=window_days * 3),
                     to_date=at_datetime
                 )
                 signals[symbol] = signal_map.get(action, "UNKNOWN")
@@ -74,7 +74,7 @@ class Basket:
                 try:
                     window_days = self.crypto_config.window_days if "/" in symbol else self.stock_config.window_days
                     action, confidence = trainer.predict(
-                        from_date=current_date - datetime.timedelta(days=window_days + 14),
+                        from_date=current_date - datetime.timedelta(days=window_days * 3),
                         to_date=current_date
                     )
                     price_data = trainer.fetch_price_at(current_date)

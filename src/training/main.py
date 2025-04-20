@@ -15,7 +15,8 @@ def main():
     crypto_config = get_config("crypto")
     stock_config = get_config("stock")
     
-    symbols = stock_config.symbols
+    # symbols = stock_config.symbols + crypto_config.symbols
+    symbols = ["MATIC/USD"]
     
     parser = argparse.ArgumentParser()
     parser.add_argument("--backtrack", action="store_true", default=False, help="Backtrack mode")
