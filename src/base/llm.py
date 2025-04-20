@@ -31,20 +31,20 @@ class BaseLLM(BaseActionProtected):
         }
         
         technical = f"""
-    RSI: {technical_indicators["1d"]['rsi'].round(3) if technical_indicators["1d"] else "No Data"}, {technical_indicators["1w"]['rsi'].round(3) if technical_indicators["1w"] else "No Data"}  
-    MACD: {technical_indicators["1d"]['macd'].round(3) if technical_indicators["1d"] else "No Data"}, {technical_indicators["1w"]['macd'].round(3) if technical_indicators["1w"] else "No Data"}  
-    MACD Signal: {technical_indicators["1d"]['macd_signal'].round(3) if technical_indicators["1d"] else "No Data"}, {technical_indicators["1w"]['macd_signal'].round(3) if technical_indicators["1w"] else "No Data"}  
-    EMA 20: {technical_indicators["1d"]['ema_20'].round(3) if technical_indicators["1d"] else "No Data"}, {technical_indicators["1w"]['ema_20'].round(3) if technical_indicators["1w"] else "No Data"}  
-    EMA 50: {technical_indicators["1d"]['ema_50'].round(3) if technical_indicators["1d"] else "No Data"}, {technical_indicators["1w"]['ema_50'].round(3) if technical_indicators["1w"] else "No Data"}  
-    Stochastic K: {technical_indicators["1d"]['stoch_k'].round(3) if technical_indicators["1d"] else "No Data"}, {technical_indicators["1w"]['stoch_k'].round(3) if technical_indicators["1w"] else "No Data"}  
-    Stochastic D: {technical_indicators["1d"]['stoch_d'].round(3) if technical_indicators["1d"] else "No Data"}, {technical_indicators["1w"]['stoch_d'].round(3) if technical_indicators["1w"] else "No Data"}  
-    ROC: {technical_indicators["1d"]['roc'].round(3) if technical_indicators["1d"] else "No Data"}, {technical_indicators["1w"]['roc'].round(3) if technical_indicators["1w"] else "No Data"}  
-    ADX: {technical_indicators["1d"]['adx'].round(3) if technical_indicators["1d"] else "No Data"}, {technical_indicators["1w"]['adx'].round(3) if technical_indicators["1w"] else "No Data"}  
-    Bollinger MA: {technical_indicators["1d"]['bollinger_mavg'].round(3) if technical_indicators["1d"] else "No Data"}, {technical_indicators["1w"]['bollinger_mavg'].round(3) if technical_indicators["1w"] else "No Data"}  
-    Bollinger Upper: {technical_indicators["1d"]['bollinger_hband'].round(3) if technical_indicators["1d"] else "No Data"}, {technical_indicators["1w"]['bollinger_hband'].round(3) if technical_indicators["1w"] else "No Data"}  
-    Bollinger Lower: {technical_indicators["1d"]['bollinger_lband'].round(3) if technical_indicators["1d"] else "No Data"}, {technical_indicators["1w"]['bollinger_lband'].round(3) if technical_indicators["1w"] else "No Data"}  
-    ATR: {technical_indicators["1d"]['atr'].round(3) if technical_indicators["1d"] else "No Data"}, {technical_indicators["1w"]['atr'].round(3) if technical_indicators["1w"] else "No Data"}  
-    OBV: {technical_indicators["1d"]['obv'].round(3) if technical_indicators["1d"] else "No Data"}, {technical_indicators["1w"]['obv'].round(3) if technical_indicators["1w"] else "No Data"}
+    RSI: {technical_indicators["1d"]['rsi'].round(3) if technical_indicators["1d"] is not None else "No Data"}, {technical_indicators["1w"]['rsi'].round(3) if technical_indicators["1w"] is not None else "No Data"}  
+    MACD: {technical_indicators["1d"]['macd'].round(3) if technical_indicators["1d"] is not None else "No Data"}, {technical_indicators["1w"]['macd'].round(3) if technical_indicators["1w"] is not None else "No Data"}  
+    MACD Signal: {technical_indicators["1d"]['macd_signal'].round(3) if technical_indicators["1d"] is not None else "No Data"}, {technical_indicators["1w"]['macd_signal'].round(3) if technical_indicators["1w"] is not None else "No Data"}  
+    EMA 20: {technical_indicators["1d"]['ema_20'].round(3) if technical_indicators["1d"] is not None else "No Data"}, {technical_indicators["1w"]['ema_20'].round(3) if technical_indicators["1w"] is not None else "No Data"}  
+    EMA 50: {technical_indicators["1d"]['ema_50'].round(3) if technical_indicators["1d"] is not None else "No Data"}, {technical_indicators["1w"]['ema_50'].round(3) if technical_indicators["1w"] is not None else "No Data"}  
+    Stochastic K: {technical_indicators["1d"]['stoch_k'].round(3) if technical_indicators["1d"] is not None else "No Data"}, {technical_indicators["1w"]['stoch_k'].round(3) if technical_indicators["1w"] is not None else "No Data"}  
+    Stochastic D: {technical_indicators["1d"]['stoch_d'].round(3) if technical_indicators["1d"] is not None else "No Data"}, {technical_indicators["1w"]['stoch_d'].round(3) if technical_indicators["1w"] is not None else "No Data"}  
+    ROC: {technical_indicators["1d"]['roc'].round(3) if technical_indicators["1d"] is not None else "No Data"}, {technical_indicators["1w"]['roc'].round(3) if technical_indicators["1w"] is not None else "No Data"}  
+    ADX: {technical_indicators["1d"]['adx'].round(3) if technical_indicators["1d"] is not None else "No Data"}, {technical_indicators["1w"]['adx'].round(3) if technical_indicators["1w"] is not None else "No Data"}  
+    Bollinger MA: {technical_indicators["1d"]['bollinger_mavg'].round(3) if technical_indicators["1d"] is not None else "No Data"}, {technical_indicators["1w"]['bollinger_mavg'].round(3) if technical_indicators["1w"] is not None else "No Data"}  
+    Bollinger Upper: {technical_indicators["1d"]['bollinger_hband'].round(3) if technical_indicators["1d"] is not None else "No Data"}, {technical_indicators["1w"]['bollinger_hband'].round(3) if technical_indicators["1w"] is not None else "No Data"}  
+    Bollinger Lower: {technical_indicators["1d"]['bollinger_lband'].round(3) if technical_indicators["1d"] is not None else "No Data"}, {technical_indicators["1w"]['bollinger_lband'].round(3) if technical_indicators["1w"] is not None else "No Data"}  
+    ATR: {technical_indicators["1d"]['atr'].round(3) if technical_indicators["1d"] is not None else "No Data"}, {technical_indicators["1w"]['atr'].round(3) if technical_indicators["1w"] is not None else "No Data"}  
+    OBV: {technical_indicators["1d"]['obv'].round(3) if technical_indicators["1d"] is not None else "No Data"}, {technical_indicators["1w"]['obv'].round(3) if technical_indicators["1w"] is not None else "No Data"}
         """
         news = ""
         for article in news_articles:
