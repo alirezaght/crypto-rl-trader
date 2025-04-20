@@ -1,0 +1,44 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Run FastAPI Server",
+            "type": "python",
+            "request": "launch",
+            "module": "uvicorn",
+            "args": [
+              "src.server:app",        // module:app
+              "--host", "0.0.0.0",
+              "--port", "8080",
+              "--reload"
+            ],
+            "jinja": true,
+            "env": {
+              "PYTHONPATH": "${workspaceFolder}/src"
+            },
+            "console": "integratedTerminal"
+          },
+
+      {
+        "type": "debugpy",
+        "request": "launch",
+        "name": "Launch Main Program",
+        "program": "${workspaceFolder}/${input:programPath}",
+        "console": "integratedTerminal",
+        "envFile": "${workspaceFolder}/.env"
+      }
+    ],
+    "inputs": [
+      {
+        "type": "pickString",
+        "id": "programPath",
+        "description": "Select the Python file to debug",
+        "options": [
+          "src/main.py",
+          "src/server.py",
+          "src/train.py"
+        ]
+      }
+
+    ]
+  }

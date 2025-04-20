@@ -1,0 +1,132 @@
+from utils.secret_manager import get_groq_key
+from groq import Groq
+from groq.types.chat.chat_completion_chunk import ChatCompletionChunk
+from config_manager.config import Config
+from training.train import CryptoTrainer
+import datetime
+from utils.news import get_all_news
+from utils.data import fetch_data, add_technical_indicators, clamp_to_hour
+from typing import Generator
+from utils.langfuse import get_crypto_prompt, get_langfuse
+
+
+client = Groq(api_key=get_groq_key().strip())
+
+model = "llama3-70b-8192" # mistral-saba-24b
+
+def build_llm_prompt(symbol: str, rl_action: int, technical_indicators: dict, news_articles: list):
+    action_descriptions = {
+        0: "HOLD",
+        1: "BUY - slight chance of rise",
+        2: "BUY - moderate chance of rise",
+        3: "BUY - high chance of rise",
+        4: "SELL - slight chance of drop",
+        5: "SELL - moderate chance of drop",
+        6: "SELL - high chance of drop",
+    }
+    
+    technical = f"""
+RSI: {technical_indicators["1d"]['rsi'].round(3)}, {technical_indicators["1w"]['rsi'].round(3)}  
+MACD: {technical_indicators["1d"]['macd'].round(3)}, {technical_indicators["1w"]['macd'].round(3)}  
+MACD Signal: {technical_indicators["1d"]['macd_signal'].round(3)}, {technical_indicators["1w"]['macd_signal'].round(3)}  
+EMA 20: {technical_indicators["1d"]['ema_20'].round(3)}, {technical_indicators["1w"]['ema_20'].round(3)}  
+EMA 50: {technical_indicators["1d"]['ema_50'].round(3)}, {technical_indicators["1w"]['ema_50'].round(3)}  
+Stochastic K: {technical_indicators["1d"]['stoch_k'].round(3)}, {technical_indicators["1w"]['stoch_k'].round(3)}  
+Stochastic D: {technical_indicators["1d"]['stoch_d'].round(3)}, {technical_indicators["1w"]['stoch_d'].round(3)} 
+ROC: {technical_indicators["1d"]['roc'].round(3)}, {technical_indicators["1w"]['roc'].round(3)}  
+ADX: {technical_indicators["1d"]['adx'].round(3)}, {technical_indicators["1w"]['adx'].round(3)}  
+Bollinger MA: {technical_indicators["1d"]['bollinger_mavg'].round(3)}, {technical_indicators["1w"]['bollinger_mavg'].round(3)}  
+Bollinger Upper: {technical_indicators["1d"]['bollinger_hband'].round(3)}, {technical_indicators["1w"]['bollinger_hband'].round(3)}  
+Bollinger Lower: {technical_indicators["1d"]['bollinger_lband'].round(3)}, {technical_indicators["1w"]['bollinger_lband'].round(3)}  
+ATR: {technical_indicators["1d"]['atr'].round(3)}, {technical_indicators["1w"]['atr'].round(3)}  
+OBV: {technical_indicators["1d"]['obv'].round(3)}, {technical_indicators["1w"]['obv'].round(3)}
+    """
+    news = ""
+    for article in news_articles:
+        news += f"- {article['title']} ({article['source']}, {article['published']})\n"
+        if article.get("content"):
+            news += f"  {article['content'][:300]}...\n"
+    
+    
+    prompt = get_crypto_prompt().compile(
+        SYMBOL=symbol,
+        RLRESULT=action_descriptions[rl_action],
+        TECHNICAL=technical,
+        NEWS=news,
+    )
+    
+    return prompt.strip()
+
+
+def query_llm(symbol: str, rl_action: int, technical_indicators: dict, news_articles: list):
+    system_prompt = build_llm_prompt(symbol, rl_action, technical_indicators, news_articles)
+    user_prompt = f"Give me the signal to buy, sell or hold for {symbol}."
+    yield from query(system_prompt, user_prompt)
+    
+    
+def query(system_prompt: str, user_prompt: str):
+    trace = get_langfuse().trace(name="crypto-signal-generation")
+    messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt}
+        ]
+    
+    generation = trace.generation(
+        name="llama3-crypto-signal",
+        model=model,
+        input=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt}
+        ],
+    )
+    stream = client.chat.completions.create(
+        model="llama3-70b-8192",
+        messages=messages,
+        stream=True
+    )
+    full_response = ""
+    usage = None
+    yield "\n\n"
+    for chunk in stream:
+        chunk: ChatCompletionChunk
+        if chunk.choices and chunk.choices[0].delta.content:            
+            if chunk.usage:
+                usage = chunk.usage
+            content_chunk = chunk.choices[0].delta.content
+            full_response += content_chunk            
+            yield content_chunk
+            
+    generation.end(
+        output=full_response,
+        usage=usage,   
+    )
+
+    trace.update()
+            
+            
+            
+def query_for_symbol(symbol: str, config: Config) -> Generator[str, None, None]:        
+        yield "<thinking>Analyzing ...</thinking>"
+        trainer = CryptoTrainer(symbol=symbol, interval=config.INTERVAL, days=config.WINDOW_DAYS, predict_days=config.PREDICT_DAYS, train=False)        
+        dt_from = datetime.datetime.now() - datetime.timedelta(days=config.WINDOW_DAYS + 14)
+        dt_to = datetime.datetime.now()
+        yield "<thinking>Fetching historical data ...</thinking>"
+        action = trainer.predict(dt_from, dt_to)
+        yield "<thinking>Fetching recent articles ...</thinking>"
+        news_articles = get_all_news()
+        yield "<thinking>Adding technical indicators ...</thinking>"
+        technical_snapshot = {}
+        df = fetch_data(symbol=symbol, interval="1d", start_date=clamp_to_hour(dt_from), end_date=clamp_to_hour(dt_to))
+        df_with_indicators = add_technical_indicators(df)
+        latest_row = df_with_indicators.iloc[-1]
+        technical_snapshot["1d"] = latest_row
+        
+        df = fetch_data(symbol=symbol, interval="1d", start_date=clamp_to_hour(dt_from), end_date=clamp_to_hour(dt_to - datetime.timedelta(days=7)))
+        df_with_indicators = add_technical_indicators(df)
+        latest_row = df_with_indicators.iloc[-1]
+        technical_snapshot["1w"] = latest_row
+        
+        
+        
+        for chunk in query_llm(symbol, action, technical_snapshot, news_articles):
+            yield chunk

@@ -1,0 +1,21 @@
+{
+    "name": "SynapSignal",
+    "short_name": "SynapSignal",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#2D3748",
+    "description": "SynapSignal is a smart crypto trading assistant powered by reinforcement learning, technical indicators, and real-time news insights.",
+    "icons": [
+      {
+        "src": "/icons/icon-192x192.png",
+        "type": "image/png",
+        "sizes": "192x192"
+      },
+      {
+        "src": "/icons/icon-512x512.png",
+        "type": "image/png",
+        "sizes": "512x512"
+      }
+    ]
+  }
