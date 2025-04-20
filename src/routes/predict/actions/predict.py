@@ -10,5 +10,5 @@ class PredictAction(BaseActionProtected):
         trainer = CryptoTrainer(symbol=symbol, interval=config.interval, days=config.window_days, predict_days=config.predict_days, train=False)
         dt_from = datetime.datetime.now() - datetime.timedelta(days=config.window_days + 14)
         dt_to = datetime.datetime.now()
-        action = trainer.predict(dt_from, dt_to)
+        action, confidence = trainer.predict(dt_from, dt_to)
         return PredictResponse(action=action)

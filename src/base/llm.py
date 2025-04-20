@@ -1,7 +1,7 @@
 from utils.secret_manager import get_groq_key
 from groq import Groq
 from groq.types.chat.chat_completion_chunk import ChatCompletionChunk
-from training.train import CryptoTrainer
+from training.train import CryptoTrainer, PredictionResult
 import datetime
 from utils.news import get_all_crypto_news, get_all_stock_news
 from utils.data import fetch_data, add_technical_indicators, clamp_to_hour
@@ -9,6 +9,7 @@ from typing import Generator
 from utils.langfuse import get_langfuse
 from .action import BaseActionProtected
 from config_manager.config import get_config
+
 
 class BaseLLM(BaseActionProtected):
     def __init__(self, model: str = "llama3-70b-8192", langfuse_prompt: str = "crypto"):
@@ -18,7 +19,7 @@ class BaseLLM(BaseActionProtected):
         self.langfuse_prompt = langfuse_prompt
         self.prompt_template = get_langfuse().get_prompt(langfuse_prompt)
 
-    def build_llm_prompt(self, symbol: str, rl_action: int, technical_indicators: dict, news_articles: list):
+    def build_llm_prompt(self, symbol: str, rl_action: PredictionResult, technical_indicators: dict, news_articles: list):
         action_descriptions = {
             0: "HOLD",
             1: "BUY - slight chance of rise",
@@ -54,7 +55,8 @@ class BaseLLM(BaseActionProtected):
         
         prompt = self.prompt_template.compile(
             SYMBOL=symbol,
-            RLRESULT=action_descriptions[rl_action],
+            RLRESULT=action_descriptions[rl_action.action],
+            CONFIDENCE=action_descriptions[rl_action.confidence],
             TECHNICAL=technical,
             NEWS=news,
         )
@@ -62,7 +64,7 @@ class BaseLLM(BaseActionProtected):
         return prompt.strip()
 
 
-    def query_llm(self, symbol: str, rl_action: int, technical_indicators: dict, news_articles: list):
+    def query_llm(self, symbol: str, rl_action: PredictionResult, technical_indicators: dict, news_articles: list):
         system_prompt = self.build_llm_prompt(symbol, rl_action, technical_indicators, news_articles)
         user_prompt = f"Give me the signal to buy, sell or hold for {symbol}."
         yield from self. query(system_prompt, user_prompt)
@@ -116,7 +118,7 @@ class BaseLLM(BaseActionProtected):
             dt_from = datetime.datetime.now() - datetime.timedelta(days=config.window_days + 14)
             dt_to = datetime.datetime.now()
             yield "<thinking>Fetching historical data ...</thinking>"
-            action = trainer.predict(dt_from, dt_to)
+            rl_result = trainer.predict(dt_from, dt_to)
             yield "<thinking>Fetching recent articles ...</thinking>"
             news_articles = get_all_crypto_news() if "/" in symbol else get_all_stock_news()
             yield "<thinking>Adding technical indicators ...</thinking>"
@@ -133,5 +135,5 @@ class BaseLLM(BaseActionProtected):
             
             
             
-            for chunk in self.query_llm(symbol, action, technical_snapshot, news_articles):
+            for chunk in self.query_llm(symbol, rl_result, technical_snapshot, news_articles):
                 yield chunk

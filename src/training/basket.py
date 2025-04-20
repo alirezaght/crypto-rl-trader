@@ -33,7 +33,7 @@ class Basket:
         for symbol, trainer in self.assets.items():
             try:
                 window_days = self.crypto_config.window_days if "/" in symbol else self.stock_config.window_days
-                action = trainer.predict(
+                action, confidence = trainer.predict(
                     from_date=at_datetime - datetime.timedelta(days=window_days + 14),
                     to_date=at_datetime
                 )
@@ -73,7 +73,7 @@ class Basket:
                 print_spinner()
                 try:
                     window_days = self.crypto_config.window_days if "/" in symbol else self.stock_config.window_days
-                    action = trainer.predict(
+                    action, confidence = trainer.predict(
                         from_date=current_date - datetime.timedelta(days=window_days + 14),
                         to_date=current_date
                     )

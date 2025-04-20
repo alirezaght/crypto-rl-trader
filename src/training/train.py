@@ -1,13 +1,21 @@
 from stable_baselines3 import PPO
 from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize
 import numpy as np
-from .crypto_env import CryptoPredictionEnv
+from training.crypto_env import CryptoPredictionEnv
 import matplotlib.pyplot as plt
 from utils.data import get_candle_count, fetch_data, clamp_to_hour
 import datetime
 from utils.storage import download_from_gcs, gcs_file_exists, upload_to_gcs
 import os
 from config_manager.schemas import Config
+import torch
+from db.firestore import init_firebase
+from config_manager.config import get_config
+from typing import NamedTuple
+
+class PredictionResult(NamedTuple):
+    action: str
+    confidence: float
 
 class CryptoTrainer:
     def __init__(self, symbol: str, crypto_config: Config, stock_config: Config, train=True):
@@ -47,7 +55,7 @@ class CryptoTrainer:
             download_from_gcs(f"models/vec_{self.file_name}.pkl", self.vec_path)
             
         
-    def predict(self, from_date: datetime.datetime, to_date: datetime.datetime) -> int:
+    def predict(self, from_date: datetime.datetime, to_date: datetime.datetime) -> PredictionResult:
         df = fetch_data(symbol=self.symbol, interval=self.interval, start_date=clamp_to_hour(from_date), end_date=clamp_to_hour(to_date))
         if len(df) < self.window_size:
             raise ValueError("Not enough data to make a prediction.")
@@ -63,8 +71,11 @@ class CryptoTrainer:
         obs = vec_env.normalize_obs(env._get_observation())  
 
         action, _ = model.predict(obs, deterministic=True)
+        obs_tensor = torch.tensor(obs).unsqueeze(0).float().to(model.device)
+        action_dist = model.policy.get_distribution(obs_tensor)
+        confidence_score = round(action_dist.distribution.probs.max().item(), 2)
         action = int(action)
-        return action
+        return PredictionResult(action=action, confidence=confidence_score)        
         
     def fetch_price_at(self, dt: datetime.datetime) -> dict:
         df = fetch_data(symbol=self.symbol, interval=self.interval,
@@ -74,4 +85,7 @@ class CryptoTrainer:
         nearest = df.iloc[df.index.get_indexer([dt], method="nearest")]
         return nearest.iloc[0].to_dict()
 
-    
+if __name__ == "__main__":   
+    init_firebase()        
+    trainer = CryptoTrainer(symbol="ETH/USD", crypto_config=get_config("crypto"), stock_config=get_config("stock"), train=False)
+    print(trainer.predict(datetime.datetime.now() - datetime.timedelta(days=90), datetime.datetime.now()))
