@@ -31,11 +31,9 @@ class Basket:
         }
         signals = {}
         for symbol, trainer in self.assets.items():
-            try:
-                window_days = self.crypto_config.window_days if "/" in symbol else self.stock_config.window_days
-                action, confidence = trainer.predict(
-                    from_date=at_datetime - datetime.timedelta(days=window_days * 3),
-                    to_date=at_datetime
+            try:                
+                action, confidence = trainer.predict(                    
+                    at_datetime
                 )
                 signals[symbol] = signal_map.get(action, "UNKNOWN")
             except Exception as e:
@@ -71,11 +69,9 @@ class Basket:
 
             for symbol, trainer in self.assets.items():
                 print_spinner()
-                try:
-                    window_days = self.crypto_config.window_days if "/" in symbol else self.stock_config.window_days
-                    action, confidence = trainer.predict(
-                        from_date=current_date - datetime.timedelta(days=window_days * 3),
-                        to_date=current_date
+                try:                    
+                    action, confidence = trainer.predict(                        
+                        current_date
                     )
                     price_data = trainer.fetch_price_at(current_date)
                     price = price_data["close"]

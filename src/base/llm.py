@@ -31,20 +31,20 @@ class BaseLLM(BaseActionProtected):
         }
         
         technical = f"""
-    RSI: {technical_indicators["1d"]['rsi'].round(3)}, {technical_indicators["1w"]['rsi'].round(3)}  
-    MACD: {technical_indicators["1d"]['macd'].round(3)}, {technical_indicators["1w"]['macd'].round(3)}  
-    MACD Signal: {technical_indicators["1d"]['macd_signal'].round(3)}, {technical_indicators["1w"]['macd_signal'].round(3)}  
-    EMA 20: {technical_indicators["1d"]['ema_20'].round(3)}, {technical_indicators["1w"]['ema_20'].round(3)}  
-    EMA 50: {technical_indicators["1d"]['ema_50'].round(3)}, {technical_indicators["1w"]['ema_50'].round(3)}  
-    Stochastic K: {technical_indicators["1d"]['stoch_k'].round(3)}, {technical_indicators["1w"]['stoch_k'].round(3)}  
-    Stochastic D: {technical_indicators["1d"]['stoch_d'].round(3)}, {technical_indicators["1w"]['stoch_d'].round(3)} 
-    ROC: {technical_indicators["1d"]['roc'].round(3)}, {technical_indicators["1w"]['roc'].round(3)}  
-    ADX: {technical_indicators["1d"]['adx'].round(3)}, {technical_indicators["1w"]['adx'].round(3)}  
-    Bollinger MA: {technical_indicators["1d"]['bollinger_mavg'].round(3)}, {technical_indicators["1w"]['bollinger_mavg'].round(3)}  
-    Bollinger Upper: {technical_indicators["1d"]['bollinger_hband'].round(3)}, {technical_indicators["1w"]['bollinger_hband'].round(3)}  
-    Bollinger Lower: {technical_indicators["1d"]['bollinger_lband'].round(3)}, {technical_indicators["1w"]['bollinger_lband'].round(3)}  
-    ATR: {technical_indicators["1d"]['atr'].round(3)}, {technical_indicators["1w"]['atr'].round(3)}  
-    OBV: {technical_indicators["1d"]['obv'].round(3)}, {technical_indicators["1w"]['obv'].round(3)}
+    RSI: {technical_indicators["1d"]['rsi'].round(3) if technical_indicators["1d"] else "No Data"}, {technical_indicators["1w"]['rsi'].round(3) if technical_indicators["1w"] else "No Data"}  
+    MACD: {technical_indicators["1d"]['macd'].round(3) if technical_indicators["1d"] else "No Data"}, {technical_indicators["1w"]['macd'].round(3) if technical_indicators["1w"] else "No Data"}  
+    MACD Signal: {technical_indicators["1d"]['macd_signal'].round(3) if technical_indicators["1d"] else "No Data"}, {technical_indicators["1w"]['macd_signal'].round(3) if technical_indicators["1w"] else "No Data"}  
+    EMA 20: {technical_indicators["1d"]['ema_20'].round(3) if technical_indicators["1d"] else "No Data"}, {technical_indicators["1w"]['ema_20'].round(3) if technical_indicators["1w"] else "No Data"}  
+    EMA 50: {technical_indicators["1d"]['ema_50'].round(3) if technical_indicators["1d"] else "No Data"}, {technical_indicators["1w"]['ema_50'].round(3) if technical_indicators["1w"] else "No Data"}  
+    Stochastic K: {technical_indicators["1d"]['stoch_k'].round(3) if technical_indicators["1d"] else "No Data"}, {technical_indicators["1w"]['stoch_k'].round(3) if technical_indicators["1w"] else "No Data"}  
+    Stochastic D: {technical_indicators["1d"]['stoch_d'].round(3) if technical_indicators["1d"] else "No Data"}, {technical_indicators["1w"]['stoch_d'].round(3) if technical_indicators["1w"] else "No Data"}  
+    ROC: {technical_indicators["1d"]['roc'].round(3) if technical_indicators["1d"] else "No Data"}, {technical_indicators["1w"]['roc'].round(3) if technical_indicators["1w"] else "No Data"}  
+    ADX: {technical_indicators["1d"]['adx'].round(3) if technical_indicators["1d"] else "No Data"}, {technical_indicators["1w"]['adx'].round(3) if technical_indicators["1w"] else "No Data"}  
+    Bollinger MA: {technical_indicators["1d"]['bollinger_mavg'].round(3) if technical_indicators["1d"] else "No Data"}, {technical_indicators["1w"]['bollinger_mavg'].round(3) if technical_indicators["1w"] else "No Data"}  
+    Bollinger Upper: {technical_indicators["1d"]['bollinger_hband'].round(3) if technical_indicators["1d"] else "No Data"}, {technical_indicators["1w"]['bollinger_hband'].round(3) if technical_indicators["1w"] else "No Data"}  
+    Bollinger Lower: {technical_indicators["1d"]['bollinger_lband'].round(3) if technical_indicators["1d"] else "No Data"}, {technical_indicators["1w"]['bollinger_lband'].round(3) if technical_indicators["1w"] else "No Data"}  
+    ATR: {technical_indicators["1d"]['atr'].round(3) if technical_indicators["1d"] else "No Data"}, {technical_indicators["1w"]['atr'].round(3) if technical_indicators["1w"] else "No Data"}  
+    OBV: {technical_indicators["1d"]['obv'].round(3) if technical_indicators["1d"] else "No Data"}, {technical_indicators["1w"]['obv'].round(3) if technical_indicators["1w"] else "No Data"}
         """
         news = ""
         for article in news_articles:
@@ -56,7 +56,7 @@ class BaseLLM(BaseActionProtected):
         prompt = self.prompt_template.compile(
             SYMBOL=symbol,
             RLRESULT=action_descriptions[rl_action.action],
-            CONFIDENCE=action_descriptions[rl_action.confidence],
+            CONFIDENCE=rl_action.confidence,
             TECHNICAL=technical,
             NEWS=news,
         )
@@ -111,29 +111,42 @@ class BaseLLM(BaseActionProtected):
             
             
             
-    def query_for_symbol(self, symbol: str) -> Generator[str, None, None]:        
-            yield "<thinking>Analyzing ...</thinking>"
-            config = get_config("crypto" if "/" in symbol else "stock")
-            trainer = CryptoTrainer(symbol=symbol, interval=config.interval, days=config.window_days, predict_days=config.predict_days, train=False)        
-            dt_from = datetime.datetime.now() - datetime.timedelta(days=config.window_days * 3)
-            dt_to = datetime.datetime.now()
+    def query_for_symbol(self, symbol: str) -> Generator[str, None, None]:              
+        config = get_config("crypto" if "/" in symbol else "stock")
+        dt_from = datetime.datetime.now() - datetime.timedelta(days=config.window_days)
+        dt_to = datetime.datetime.now()
+        yield "<thinking>Analyzing ...</thinking>"
+        try:                        
+            trainer = CryptoTrainer(symbol=symbol, crypto_config=get_config("crypto"), stock_config=get_config("stock"), train=False)                    
             yield "<thinking>Fetching historical data ...</thinking>"
-            rl_result = trainer.predict(dt_from, dt_to)
-            yield "<thinking>Fetching recent articles ...</thinking>"
-            news_articles = get_all_crypto_news() if "/" in symbol else get_all_stock_news()
-            yield "<thinking>Adding technical indicators ...</thinking>"
-            technical_snapshot = {}
+            rl_result = trainer.predict(dt_to)
+        except Exception as e:
+            yield f"<thinking>Couldn't process {symbol}...</thinking>"
+            rl_result = PredictionResult(action=0, confidence=-1)
+            
+        yield "<thinking>Fetching recent articles ...</thinking>"
+        news_articles = get_all_crypto_news() if "/" in symbol else get_all_stock_news()
+        yield "<thinking>Adding technical indicators ...</thinking>"
+        technical_snapshot = {}
+        try:
             df = fetch_data(symbol=symbol, interval="1d", start_date=clamp_to_hour(dt_from), end_date=clamp_to_hour(dt_to))
             df_with_indicators = add_technical_indicators(df)
             latest_row = df_with_indicators.iloc[-1]
             technical_snapshot["1d"] = latest_row
-            
+        except Exception as e:
+            technical_snapshot["1d"] = None
+        
+        try:
             df = fetch_data(symbol=symbol, interval="1d", start_date=clamp_to_hour(dt_from), end_date=clamp_to_hour(dt_to - datetime.timedelta(days=7)))
             df_with_indicators = add_technical_indicators(df)
             latest_row = df_with_indicators.iloc[-1]
             technical_snapshot["1w"] = latest_row
+        except Exception as e:
+            technical_snapshot["1w"] = None
+        
+        
+        
+        for chunk in self.query_llm(symbol, rl_result, technical_snapshot, news_articles):
+            yield chunk
+        
             
-            
-            
-            for chunk in self.query_llm(symbol, rl_result, technical_snapshot, news_articles):
-                yield chunk

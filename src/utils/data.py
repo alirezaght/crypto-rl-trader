@@ -126,7 +126,7 @@ def fetch_data(
 
         df.reset_index(inplace=True)        
         
-        df.rename(columns={"Datetime": "timestamp", "Open": "open", "High": "high", "Low": "low", "Close": "close", "Volume": "volume"}, inplace=True)
+        df.rename(columns={"Datetime": "timestamp", "Date": "timestamp", "Open": "open", "High": "high", "Low": "low", "Close": "close", "Volume": "volume"}, inplace=True)
         if isinstance(df.columns, pd.MultiIndex):
             df.columns = [col[0].lower() for col in df.columns]
         else:
@@ -138,28 +138,27 @@ def fetch_data(
 
 
 
-def get_recent_data(symbol, interval, days=3):
+def get_recent_data(symbol, interval, days=7):
     dt_to = datetime.datetime.now()
     dt_from = dt_to - datetime.timedelta(days=days)
     return fetch_data(symbol, interval=interval, start_date=clamp_to_hour(dt_from), end_date=clamp_to_hour(dt_to))
 
-def get_pair_volume(symbol, interval, days=3):
+def get_pair_volume(symbol, interval, days=7):
     df = get_recent_data(symbol, interval, days)
     return df["volume"].sum()
 
-def get_pair_volatility(symbol, interval, days=3):
+def get_pair_volatility(symbol, interval, days=7):
     df = get_recent_data(symbol, interval, days)
     return df["close"].pct_change().std()
 
-def get_recent_return(symbol, interval, days=3):
+def get_recent_return(symbol, interval, days=7):
     df = get_recent_data(symbol, interval, days)
     return (df["close"].iloc[-1] - df["close"].iloc[0]) / df["close"].iloc[0]
 
 
-def rank_hot_pairs(pairs, interval, days=3):
+def rank_hot_pairs(pairs, interval, days=7):
     scores = []
-    metrics = []
-
+    metrics = []    
     for symbol in pairs:
         try:
             volume = get_pair_volume(symbol, interval, days)

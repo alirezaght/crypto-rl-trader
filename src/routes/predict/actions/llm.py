@@ -5,6 +5,7 @@ from typing import Literal
 from config_manager.config import get_config
 from config_manager.schemas import Config
 from base.schemas import MarketType
+import random
 
 class LLMAction(BaseActionProtected):
     
@@ -34,8 +35,9 @@ class LLMAction(BaseActionProtected):
             llm = self.stock_llm
             
         if llm:
-            symbols = rank_hot_pairs(config.symbols, interval=config.interval, days=3)[:10]
-            
+            symbols = rank_hot_pairs(config.symbols, interval=config.interval, days=7)[:10]
+            if len(symbols) == 0:
+                symbols = random.sample(config.symbols, k=min(10, len(config.symbols)))
             for symbol in symbols:
                 yield from llm.query_for_symbol(symbol)
     

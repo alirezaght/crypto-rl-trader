@@ -85,10 +85,22 @@ export default function App() {
   const [configLoading, setConfigLoading] = useState(true)
 
   useEffect(() => {
+    let intervalId;
+  
     if (configLoading) {
-      const msg = loadingMessages[Math.floor(Math.random() * loadingMessages.length)]
-      setLoadingMessage(msg)
+      const pickMessage = () => {
+        const msg = loadingMessages[Math.floor(Math.random() * loadingMessages.length)];
+        setLoadingMessage(msg);
+      }
+  
+      pickMessage(); 
+  
+      intervalId = setInterval(() => {
+        pickMessage();
+      }, 5000)
     }
+  
+    return () => clearInterval(intervalId); 
   }, [configLoading])
 
   useEffect(() => {

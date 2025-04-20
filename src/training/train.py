@@ -55,10 +55,13 @@ class CryptoTrainer:
             download_from_gcs(f"models/vec_{self.file_name}.pkl", self.vec_path)
             
         
-    def predict(self, from_date: datetime.datetime, to_date: datetime.datetime) -> PredictionResult:
-        df = fetch_data(symbol=self.symbol, interval=self.interval, start_date=clamp_to_hour(from_date), end_date=clamp_to_hour(to_date))
+    def predict(self, date: datetime.datetime) -> PredictionResult:
+        df = fetch_data(symbol=self.symbol, interval=self.interval, start_date=clamp_to_hour(date - datetime.timedelta(days=365)), end_date=clamp_to_hour(date))
+        
         if len(df) < self.window_size:
             raise ValueError("Not enough data to make a prediction.")
+        
+        df = df.tail(self.window_size)
         df_no_ts = df.drop(columns=["timestamp"])
         env = CryptoPredictionEnv(df=df_no_ts, window_size=self.window_size, prediction_horizon=self.predict_horizon)
         env.current_step = self.window_size
@@ -88,4 +91,4 @@ class CryptoTrainer:
 if __name__ == "__main__":   
     init_firebase()        
     trainer = CryptoTrainer(symbol="ETH/USD", crypto_config=get_config("crypto"), stock_config=get_config("stock"), train=False)
-    print(trainer.predict(datetime.datetime.now() - datetime.timedelta(days=90), datetime.datetime.now()))
+    print(trainer.predict(datetime.datetime.now()))
