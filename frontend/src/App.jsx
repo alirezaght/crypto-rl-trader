@@ -49,12 +49,26 @@ const firebaseConfig = {
 
 const appUrl = process.env.REACT_APP_API_URL
 
+const loadingMessages = [
+  "Waking up the servers... please answer 🙏",
+  "Stretching the serverless muscles...",
+  "Assembling LLM neurons from hibernation...",
+  "Tuning quantum GPUs... just kidding (or are we?)",
+  "Unfolding the RL agent from its nap pod 🛌",
+  "Coaxing predictions out of a cold container...",
+  "Booting up the brains... might take a sec 🧠",  
+  "Starting the engines... slightly slower in winter 🧊",    
+  "Beep... boop... warming up Synap intelligence...",  
+  "Summoning trading gods...",
+]
+
 
 const app = initializeApp(firebaseConfig)
 const auth = getAuth(app)
 const googleProvider = new GoogleAuthProvider()
 
 export default function App() {
+  const [loadingMessage, setLoadingMessage] = useState('')
   const [user, setUser] = useState(null)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -69,6 +83,13 @@ export default function App() {
   const toast = useToast()
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   const [configLoading, setConfigLoading] = useState(true)
+
+  useEffect(() => {
+    if (configLoading) {
+      const msg = loadingMessages[Math.floor(Math.random() * loadingMessages.length)]
+      setLoadingMessage(msg)
+    }
+  }, [configLoading])
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -311,8 +332,9 @@ export default function App() {
         {!user ? renderAuthForm() :
           (
             configLoading ? (
-              <Flex justify="center" align="center" minH="50vh">
-                <Spinner color="gold" size="xl" thickness="4px" />
+              <Flex direction="column" justify="center" align="center" minH="50vh" textAlign="center">
+                <Spinner color="gold" size="xl" thickness="4px" mb={4} />
+                <Text fontStyle="italic" color="gray.300">{loadingMessage}</Text>
               </Flex>
             ) :
               (
