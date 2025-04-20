@@ -1,19 +1,41 @@
+from base.llm import BaseLLM
 from base.action import BaseActionProtected
-from base.llm import query_for_symbol
 from utils.data import rank_hot_pairs
-
+from typing import Literal
+from config_manager.config import get_config
+from config_manager.schemas import Config
+from base.schemas import MarketType
 
 class LLMAction(BaseActionProtected):
-    def query_for_one_symbol(self, symbol):
-        return query_for_symbol(symbol, self.config)
     
-    def query_for_hot_pairs(self):        
+    def __init__(self):
+        super().__init__()
+        self.crypto_llm = BaseLLM(model="llama3-70b-8192", langfuse_prompt="crypto")
+        self.stock_llm = BaseLLM(model="llama3-70b-8192", langfuse_prompt="stock")
+        
+    
+    def query_for_one_symbol(self, symbol):
+        if "/" in symbol:
+            return self.crypto_llm.query_for_symbol(symbol)
+        else:
+            return self.stock_llm.query_for_symbol(symbol)
+    
+    def query_for_hot_pairs(self, type: MarketType):        
         yield "<thinking>Analyzing ...</thinking>"
-        pairs = self.config.PAIRS        
-        interval = self.config.INTERVAL        
-        all_pairs = self.config.PAIRS
-        top_pairs = rank_hot_pairs(all_pairs, interval=interval, days=3)[:10]
-        pairs = top_pairs
-        for symbol in pairs:
-            yield from query_for_symbol(symbol, self.config)
+        
+        
+        config: Config = get_config(type)
+        
+        llm: BaseLLM = None
+        
+        if type == "crypto":            
+            llm = self.crypto_llm
+        elif type == "stock":            
+            llm = self.stock_llm
+            
+        if llm:
+            symbols = rank_hot_pairs(config.symbols, interval=config.interval, days=3)[:10]
+            
+            for symbol in symbols:
+                yield from llm.query_for_symbol(symbol)
     

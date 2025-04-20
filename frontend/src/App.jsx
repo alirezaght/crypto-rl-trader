@@ -121,7 +121,7 @@ export default function App() {
     }
   }
 
-  const fetchLLMStreamSummary = async () => {
+  const fetchLLMStreamSummary = async (type) => {
     if (!user) return
     setLlmText('')
     setStreaming(true)
@@ -129,7 +129,7 @@ export default function App() {
 
     try {
       const token = await user.getIdToken()
-      const res = await fetch(`${appUrl}/llm-summary`, {
+      const res = await fetch(`${appUrl}/llm-summary?type=${type}`, {
         headers: { Authorization: `Bearer ${token}` }
       })
 
@@ -325,7 +325,8 @@ export default function App() {
                   <Flex justify="left" align={"center"} >
                     <Box mt={4}>
                       <Input
-                        placeholder="Search a crypto pair"
+                        width="350px"
+                        placeholder="Search a crypto pair or a stock symbol"
                         value={selectedPair}
                         onClick={() => {
                           setSelectedPair('')
@@ -344,7 +345,7 @@ export default function App() {
                         borderColor="gold"
                       />
                       <Box bg="black" mt={1} rounded="md" maxH="200px" overflowY="auto">
-                        {config?.pairs
+                        {config?.symbols
                           .filter(pair =>
                             pair.toLowerCase().includes(selectedPair.toLowerCase()) &&
                             selectedPair !== "" &&
@@ -377,10 +378,22 @@ export default function App() {
                         color={"black"}
                         bg="gold"
                         onClick={() => {
-                          fetchLLMStreamSummary()
+                          fetchLLMStreamSummary("crypto")
                         }}
                       >
                         Summarize
+                      </Button>
+                      <Button
+                        mt={4}
+                        marginLeft={4}
+                        colorScheme="gold"
+                        color={"black"}
+                        bg="gold"
+                        onClick={() => {
+                          fetchLLMStreamSummary("stock")
+                        }}
+                      >
+                        Summarize Stocks
                       </Button>
                       <Box mt={4} mb={6} p={4} bg="gray" rounded="md">
                         <Heading as="h3" size="sm" mb={2} color="gold">

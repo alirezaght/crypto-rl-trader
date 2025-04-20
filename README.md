@@ -33,17 +33,9 @@ pip install -r requirements.txt
 ```
 ⚠️ Make sure you have Python 3.9+ and an active Binance API connection (for fetching price data).
 
-## Usage
-### 📄 Environment Configuration
-This project uses a .env file. You’ll define the trading interval, window size, prediction horizon, and the crypto pairs to monitor or train.
-```bash
-# .env
+## ⚙️ Configuration
 
-INTERVAL=4h           # Options: 1h, 4h, 1d
-WINDOW_DAYS=90        # How many days of history to use for each observation
-PREDICT_DAYS=30       # How far ahead to predict
-PAIRS=BTCUSDT,ETHUSDT,BNBUSDT,XRPUSDT,LTCUSDT  # Comma-separated list of trading pairs
-```
+This project uses Google Cloud Secret Manager to securely fetch API keys and sensitive settings. You don’t need a .env file. Secrets like Binance keys, Redis endpoints, and external API keys are retrieved dynamically if you provide the `secretAccountKey.json`.
 ℹ️ You can update these values anytime before running the training or main script. The model will re-train if it doesn’t find saved checkpoints for the new config.
 
 ### ▶️ Generate real-time trading signals

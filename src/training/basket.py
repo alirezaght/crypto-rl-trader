@@ -3,18 +3,21 @@ import pandas as pd
 from typing import List, Dict
 from training.train import CryptoTrainer
 from utils.data import interval_to_hours, print_spinner
+from config_manager.schemas import Config
 
 
 
 class Basket:
-    def __init__(self, symbols: List[str], interval="4h", days=90, predict_days=30, train=True):
+    def __init__(self, symbols: List[str], crypto_config: Config, stock_config: Config, train=True):
         self.assets = {
-            symbol: CryptoTrainer(symbol=symbol, interval=interval, days=days, predict_days=predict_days, train=train)
+            symbol: CryptoTrainer(symbol=symbol, crypto_config=crypto_config, stock_config=stock_config, train=train)
             for symbol in symbols
         }
-        self.interval = interval
-        self.window_days = days
-        self.predict_days = predict_days
+        self.crypto_config = crypto_config
+        self.stock_config = stock_config
+        self.train = train
+        self.stocks = [symbol for symbol in symbols if "/" not in symbol]
+        self.cryptos = [symbol for symbol in symbols if "/" in symbol]
         
     def get_signals(self, at_datetime: datetime.datetime) -> Dict[str, str]:
         signal_map = {
@@ -29,8 +32,9 @@ class Basket:
         signals = {}
         for symbol, trainer in self.assets.items():
             try:
+                window_days = self.crypto_config.window_days if "/" in symbol else self.stock_config.window_days
                 action = trainer.predict(
-                    from_date=at_datetime - datetime.timedelta(days=self.window_days + 14),
+                    from_date=at_datetime - datetime.timedelta(days=window_days + 14),
                     to_date=at_datetime
                 )
                 signals[symbol] = signal_map.get(action, "UNKNOWN")
@@ -44,17 +48,33 @@ class Basket:
         portfolio_log = []
 
         current_date = from_date
-        step = datetime.timedelta(hours=interval_to_hours(self.interval))
-
-        while current_date + datetime.timedelta(days=self.predict_days) < to_date:
+        
+        interval = min(self.crypto_config.interval, self.stock_config.interval)
+        
+        if len(self.cryptos) == 0:
+            interval = self.stock_config.interval
+        elif len(self.stocks) == 0:
+            interval = self.crypto_config.interval
+        
+        step = datetime.timedelta(hours=interval_to_hours(interval))
+        
+        predict_days = min(self.crypto_config.predict_days, self.stock_config.predict_days)
+        
+        if len(self.cryptos) == 0:
+            predict_days = self.stock_config.predict_days
+        elif len(self.stocks) == 0:
+            predict_days = self.crypto_config.predict_days
+            
+        while current_date + datetime.timedelta(days=predict_days) < to_date:
             print_spinner()
             actions = []
 
             for symbol, trainer in self.assets.items():
                 print_spinner()
                 try:
+                    window_days = self.crypto_config.window_days if "/" in symbol else self.stock_config.window_days
                     action = trainer.predict(
-                        from_date=current_date - datetime.timedelta(days=self.window_days + 14),
+                        from_date=current_date - datetime.timedelta(days=window_days + 14),
                         to_date=current_date
                     )
                     price_data = trainer.fetch_price_at(current_date)
@@ -93,7 +113,7 @@ class Basket:
                     holdings[symbol] -= amount_to_sell
                     portfolio_log.append(f"{current_date} SELL {symbol} {fraction*100:.0f}% @ ${price:.2f}")
 
-            current_date += step * self.predict_days
+            current_date += step * predict_days
 
         final_prices = {
             symbol: self.assets[symbol].fetch_price_at(to_date)["close"]

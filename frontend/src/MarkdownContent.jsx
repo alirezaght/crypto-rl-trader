@@ -13,36 +13,35 @@ import {
 const markdown = `
 ## 📘 Trading Terms & Disclaimers
 
-**Synap Signal** is an intelligent crypto assistant that analyzes the **most recent 90 days** of historical price and data to predict **the likely market movement over the next 14 days**. Our insights combine:
+**Synap Signal** is an intelligent market assistant that analyzes historical price, volume, and technical data to provide insights into potential future movements in both **crypto** and **stock markets**. Our predictions are powered by:
 
-- Reinforcement Learning (RL)-based agent predictions  
-- Technical indicators such as **RSI**, **MACD**, and **EMA**  
-- Aggregated crypto news sentiment from trusted media sources  
+- Reinforcement Learning (RL)-based agent models  
+- A diverse set of technical indicators such as **RSI**, **MACD**, **EMA**, **Stochastic Oscillator**, **Bollinger Bands**, **ADX**, and others
+- Aggregated news sentiment from trusted financial and crypto sources  
 
 > ⚠️ **Disclaimer**  
-> This tool is intended **for informational and research purposes only**. It is not financial advice.  
-> Always do your own research and consider multiple factors before making investment decisions.  
+> This tool is intended **for informational and research purposes only**. It does not constitute financial advice.  
+> Always perform your own due diligence and consider multiple perspectives before making investment decisions.  
 
 ---
 
 ### 🔍 Additional Notes
 
-- Predictions are **probabilistic** and should not be interpreted as guarantees.  
+- Predictions are **probabilistic**, not guarantees.  
 - Past performance of any model or signal is **not indicative of future results**.  
-- The app does **not offer real-time data**. Market conditions may shift rapidly.  
-- **No trades are executed automatically.** You are solely responsible for your own actions.  
-- Trading cryptocurrencies carries **substantial risk** and may not be suitable for all investors.
+- The app does **not offer real-time data**. Market conditions may change quickly.  
+- **No trades are executed automatically.** You are fully responsible for any trading decisions made based on this tool.  
+- Trading cryptocurrencies and stocks involves **significant risk**, and may not be suitable for all investors.
 
 ---
 
-💡 Use Synap Signal as an **additional source of insight**, alongside your own research and risk management strategy.
+💡 Use Synap Signal as a **complementary insight tool**, alongside your own research, experience, and financial strategy.
 
 ---
 
 **Like this app? Support Synap Signal with a donation:**  
 
 [Donate via Stripe](https://buy.stripe.com/14k16zbdK7jc7ba000)
-
 `
 
 const MarkdownContent = () => (

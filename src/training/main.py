@@ -12,13 +12,10 @@ load_dotenv()
 
 def main():
     
-    config = get_config()
-    INTERVAL = config.INTERVAL
-    WINDOW_DAYS = int(config.WINDOW_DAYS)
-    # PREDICT_DAYS = int(config.PREDICT_DAYS)
-    PREDICT_DAYS = 14
-    PAIRS = config.PAIRS
-    PAIRS = ["BTC/USD"]
+    crypto_config = get_config("crypto")
+    stock_config = get_config("stock")
+    
+    symbols = stock_config.symbols
     
     parser = argparse.ArgumentParser()
     parser.add_argument("--backtrack", action="store_true", default=False, help="Backtrack mode")
@@ -32,7 +29,7 @@ def main():
             parser.error("--backtrack requires --start, --end, and --deposit.")
             
     
-    basket = Basket(PAIRS, interval=INTERVAL, days=WINDOW_DAYS, predict_days=PREDICT_DAYS)
+    basket = Basket(symbols, crypto_config, stock_config, train=True)
     
     if args.backtrack:        
         start_date = datetime.strptime(args.start, "%Y-%m-%d")

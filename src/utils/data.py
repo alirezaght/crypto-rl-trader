@@ -5,13 +5,18 @@ from binance.client import Client
 import asyncio
 import numpy as np
 from utils.redis_cache import redis_cache
+import yfinance as yf
+from typing import Literal
+from base.schemas import MarketType
 
 spinner = ["-", "\\", "|", "/"]
 spinner_index = 0
 
-def get_candle_count(days: int, interval: str) -> int:
+def get_candle_count(days: int, interval: str, type: MarketType) -> int:
     interval_map = {
         "1h": 24, "4h": 6, "1d": 1
+    } if type == "crypto" else {
+        "1h": 6, "1d": 1
     }
     return days * interval_map[interval]
 
@@ -58,7 +63,7 @@ def add_technical_indicators(df):
     # Volume
     df["obv"] = ta.volume.OnBalanceVolumeIndicator(close=close, volume=df["volume"]).on_balance_volume()
 
-    df = df.dropna()
+    df = df.bfill().ffill()
     return df
 
 def get_binance_client():
@@ -80,36 +85,56 @@ def fetch_data(
     end_date: datetime.datetime = None,
     lookback_days=500
 ):
-    symbol = symbol.replace("/", "").replace("USD","USDT").upper()
+    
     print_spinner()
         
     end_time = datetime.datetime.now() if end_date is None else end_date
     start_time = start_date if start_date else end_time - datetime.timedelta(days=lookback_days)
     
-    client = get_binance_client()
-    
+    if "/" in symbol:
 
-    klines = client.get_historical_klines(
-        symbol=symbol,
-        interval=interval,
-        start_str=start_time.strftime("%d %b %Y %H:%M:%S"),
-        end_str=end_time.strftime("%d %b %Y %H:%M:%S")
-    )
+        symbol = symbol.replace("/", "").replace("USD","USDT").upper()
+        client = get_binance_client()
+        
 
-    if not klines:
-        raise ValueError("No data returned from Binance.")
+        klines = client.get_historical_klines(
+            symbol=symbol,
+            interval=interval,
+            start_str=start_time.strftime("%d %b %Y %H:%M:%S"),
+            end_str=end_time.strftime("%d %b %Y %H:%M:%S")
+        )
 
-    df = pd.DataFrame(klines, columns=[
-        "timestamp", "open", "high", "low", "close", "volume",
-        "close_time", "quote_asset_volume", "num_trades",
-        "taker_buy_base_volume", "taker_buy_quote_volume", "ignore"
-    ])
+        if not klines:
+            raise ValueError("No data returned from Binance.")
 
-    df["timestamp"] = pd.to_datetime(df["timestamp"], unit='ms')
-    df = df[["timestamp", "open", "high", "low", "close", "volume"]]
-    df[["open", "high", "low", "close", "volume"]] = df[["open", "high", "low", "close", "volume"]].astype(float)
-    df = df.sort_values("timestamp").reset_index(drop=True)
-    return df
+        df = pd.DataFrame(klines, columns=[
+            "timestamp", "open", "high", "low", "close", "volume",
+            "close_time", "quote_asset_volume", "num_trades",
+            "taker_buy_base_volume", "taker_buy_quote_volume", "ignore"
+        ])
+
+        df["timestamp"] = pd.to_datetime(df["timestamp"], unit='ms')
+        df = df[["timestamp", "open", "high", "low", "close", "volume"]]
+        df[["open", "high", "low", "close", "volume"]] = df[["open", "high", "low", "close", "volume"]].astype(float)
+        df = df.sort_values("timestamp").reset_index(drop=True)
+        return df
+    else:
+        yf_interval = interval if interval in {"1m", "2m", "5m", "15m", "30m", "60m", "90m", "1h", "1d", "1wk", "1mo"} else "1h"
+        df = yf.download(symbol, start=start_time, end=end_time, interval=yf_interval)
+        if df.empty:
+            raise ValueError(f"No data returned from Yahoo Finance for {symbol}.")
+
+        df.reset_index(inplace=True)        
+        
+        df.rename(columns={"Datetime": "timestamp", "Open": "open", "High": "high", "Low": "low", "Close": "close", "Volume": "volume"}, inplace=True)
+        if isinstance(df.columns, pd.MultiIndex):
+            df.columns = [col[0].lower() for col in df.columns]
+        else:
+            df.columns = [col.lower() for col in df.columns]        
+        df = df[["timestamp", "open", "high", "low", "close", "volume"]]
+        df[["open", "high", "low", "close", "volume"]] = df[["open", "high", "low", "close", "volume"]].astype(float)
+        df = df.sort_values("timestamp").reset_index(drop=True)
+        return df
 
 
 

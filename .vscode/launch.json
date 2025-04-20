@@ -23,6 +23,9 @@
         "type": "debugpy",
         "request": "launch",
         "name": "Launch Main Program",
+        "env": {
+              "PYTHONPATH": "${workspaceFolder}/src"
+            },
         "program": "${workspaceFolder}/${input:programPath}",
         "console": "integratedTerminal",
         "envFile": "${workspaceFolder}/.env"
@@ -32,11 +35,11 @@
       {
         "type": "pickString",
         "id": "programPath",
-        "description": "Select the Python file to debug",
+        "description": "Select the Python file to debug",        
         "options": [
-          "src/main.py",
+          "src/training/main.py",
           "src/server.py",
-          "src/train.py"
+          "src/training/train.py"
         ]
       }
 

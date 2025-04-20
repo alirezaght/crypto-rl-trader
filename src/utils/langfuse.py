@@ -13,6 +13,3 @@ def get_langfuse() -> Langfuse:
             host="https://cloud.langfuse.com")
     return _langfuse
 
-
-def get_crypto_prompt() -> PromptClient:
-    return get_langfuse().get_prompt("crypto")

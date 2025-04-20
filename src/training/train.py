@@ -7,26 +7,29 @@ from utils.data import get_candle_count, fetch_data, clamp_to_hour
 import datetime
 from utils.storage import download_from_gcs, gcs_file_exists, upload_to_gcs
 import os
+from config_manager.schemas import Config
 
 class CryptoTrainer:
-    def __init__(self, symbol="BTCUSDT", interval="4h", days=90, predict_days = 30, train=True):
-        self.symbol = symbol
-        self.interval = interval
-        self.days = days
-        self.window_size = get_candle_count(days, interval)
-        self.predict_horizon = get_candle_count(predict_days, interval)
-        self.file_name = f"{symbol}_{days}_{predict_days}_{interval}".replace("/", "_")
+    def __init__(self, symbol: str, crypto_config: Config, stock_config: Config, train=True):
+        self.symbol = symbol        
+        self.interval = crypto_config.interval if "/" in symbol else stock_config.interval
+        self.days = crypto_config.window_days if "/" in symbol else stock_config.window_days
+        self.window_size = get_candle_count(self.days, self.interval, "crypto" if "/" in symbol else "stock")
+        self.predict_days = crypto_config.predict_days if "/" in symbol else stock_config.predict_days
+        self.predict_horizon = get_candle_count(self.predict_days, self.interval, "crypto" if "/" in symbol else "stock")
+        self.file_name = f"{symbol}_{self.days}_{self.predict_days}_{self.interval}".replace("/", "_")
         self.train = train  
         self.model_path = f"/tmp/{self.file_name}.zip"
         self.vec_path = f"/tmp/vec_{self.file_name}.pkl"      
         model_exists = gcs_file_exists(f"models/{self.file_name}.zip") and gcs_file_exists(f"models/vec_{self.file_name}.pkl")
         self.train = train
+        self.loopback_days = 500
 
         if not model_exists:
             if not train:
                 raise FileNotFoundError(f"Model files for {self.file_name} not found.")
             print(f"Training model for {self.symbol}")
-            df = fetch_data(symbol=symbol, interval=interval)
+            df = fetch_data(symbol=symbol, interval=self.interval, lookback_days=self.loopback_days)
             df = df.drop(columns=["timestamp"])
             env = CryptoPredictionEnv(df=df, window_size=self.window_size, prediction_horizon=self.predict_horizon)
             vec_env = DummyVecEnv([lambda: env])

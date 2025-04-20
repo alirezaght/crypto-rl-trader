@@ -16,6 +16,7 @@ def get_redis_client():
             username="default",
             password=redis_key,
         )
+        # _redis_client.flushdb()
     return _redis_client
 
 def redis_cache(ttl=3600):  # TTL = 1 hour

@@ -15,6 +15,13 @@ RSS_FEEDS = {
     "AMBCrypto": "https://ambcrypto.com/feed/",
 }
 
+STOCK_RSS_FEEDS = {
+    "CNBC": "https://www.cnbc.com/id/100003114/device/rss/rss.html",
+    "MarketWatch": "https://feeds.marketwatch.com/marketwatch/topstories/",
+    "Investopedia": "https://www.investopedia.com/feedbuilder/feed/getfeed/?feedName=rss_headline",
+    "Yahoo Finance": "https://feeds.finance.yahoo.com/rss/2.0/headline?s=AAPL,MSFT,TSLA,GOOGL&region=US&lang=en-US",
+    "Bloomberg": "https://www.bloomberg.com/feed/podcast/etf-report.xml",
+}
 
 CRYPTOPANIC_API_KEY = get_cryptopanic_key().strip()
 CRYPTOPANIC_URL = f"https://cryptopanic.com/api/v1/posts/?auth_token={CRYPTOPANIC_API_KEY}&filter=hot"
@@ -65,7 +72,7 @@ def fetch_cryptopanic(items):
         })
     return articles
 
-def get_all_news():
+def get_all_crypto_news():
     all_news = []
 
     for name, url in RSS_FEEDS.items():
@@ -73,4 +80,14 @@ def get_all_news():
 
     all_news.extend(fetch_cryptopanic(5))
     return all_news
+
+
+def get_all_stock_news():
+    all_news = []
+
+    for name, url in STOCK_RSS_FEEDS.items():
+        all_news.extend(fetch_rss(url, name, 2))
+
+    return all_news
+
 

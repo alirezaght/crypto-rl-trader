@@ -3,7 +3,8 @@ from .actions.predict import PredictAction
 from .actions.llm import LLMAction
 from .schemas import PredictResponse
 from fastapi.responses import StreamingResponse
-
+from typing import Literal
+from base.schemas import MarketType
 
 router = APIRouter(tags=["Predict Route"])
 
@@ -21,8 +22,8 @@ async def llm_stream(symbol: str, action: LLMAction = Depends(LLMAction)):
 
 
 @router.get("/llm-summary")
-async def llm_summary(action: LLMAction = Depends(LLMAction)):        
-    return StreamingResponse(action.query_for_hot_pairs())
+async def llm_summary(type: MarketType = "crypto", action: LLMAction = Depends(LLMAction)):        
+    return StreamingResponse(action.query_for_hot_pairs(type))
 
 
 

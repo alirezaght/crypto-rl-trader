@@ -19,3 +19,4 @@ pydantic
 python-binance
 redis
 langfuse
+yfinance

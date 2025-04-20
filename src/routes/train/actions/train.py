@@ -3,18 +3,16 @@ from fastapi import HTTPException
 from training.basket import Basket
 import datetime
 from ..schemas import TrainResponse
+from config_manager.config import get_config
 
 class TrainAction(BaseActionProtected):
     def train(self) -> TrainResponse:        
         if self.user.get("role") != "trainer":
             raise HTTPException(status_code=403, detail="Access denied: trainer role required")
         
-        pairs = self.config.PAIRS
-        predict_days = self.config.PREDICT_DAYS
-        interval = self.config.INTERVAL
-        window_days = self.config.WINDOW_DAYS
+        symbols = self.db_config.PAIRS + self.db_config.STOCKS        
         
-        basket = Basket(pairs, interval=interval, days=window_days, predict_days=predict_days)
+        basket = Basket(symbols, get_config("crypto"), get_config("stock"), train=True)
         results = basket.get_signals(datetime.datetime.now())
         return TrainResponse(results=results)
     
