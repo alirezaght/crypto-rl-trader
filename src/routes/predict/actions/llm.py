@@ -1,4 +1,4 @@
-from base.llm import BaseLLM
+from llm.predict_llm import PredictLLM
 from base.action import BaseActionProtected
 from utils.data import rank_hot_pairs
 from typing import Literal
@@ -11,8 +11,8 @@ class LLMAction(BaseActionProtected):
     
     def __init__(self):
         super().__init__()
-        self.crypto_llm = BaseLLM(model="llama3-70b-8192", langfuse_prompt="crypto")
-        self.stock_llm = BaseLLM(model="llama3-70b-8192", langfuse_prompt="stock")
+        self.crypto_llm = PredictLLM(model="llama3-70b-8192", langfuse_prompt="crypto")
+        self.stock_llm = PredictLLM(model="llama3-70b-8192", langfuse_prompt="stock")
         
     
     def query_for_one_symbol(self, symbol):
@@ -27,7 +27,7 @@ class LLMAction(BaseActionProtected):
         
         config: Config = get_config(type)
         
-        llm: BaseLLM = None
+        llm: PredictLLM = None
         
         if type == "crypto":            
             llm = self.crypto_llm

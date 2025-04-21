@@ -8,6 +8,7 @@ from routes.config.route import router as config_router
 from routes.predict.route import router as predict_router
 from routes.suggest.route import router as suggest_router
 from routes.train.route import router as train_router
+from routes.trends.route import router as trends_router
 from exception.validation import register_validation_handlers
 from contextlib import asynccontextmanager
 
@@ -47,6 +48,7 @@ app.include_router(config_router)
 app.include_router(predict_router)
 app.include_router(suggest_router)
 app.include_router(train_router)
+app.include_router(trends_router)
 
 
 register_validation_handlers(app)

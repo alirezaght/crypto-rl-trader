@@ -169,7 +169,7 @@ export default function App() {
     }
   }
 
-  const fetchLLMStreamSummary = async (type) => {
+  const fetchLLMStreamSummary = async (url) => {
     if (!user) return
     setLlmText('')
     setStreaming(true)
@@ -177,7 +177,7 @@ export default function App() {
 
     try {
       const token = await user.getIdToken()
-      const res = await fetch(`${appUrl}/llm-summary?type=${type}`, {
+      const res = await fetch(`${appUrl}/${url}`, {
         headers: { Authorization: `Bearer ${token}` }
       })
 
@@ -427,7 +427,7 @@ export default function App() {
                         color={"black"}
                         bg="gold"
                         onClick={() => {
-                          fetchLLMStreamSummary("crypto")
+                          fetchLLMStreamSummary("llm-summary?type=crypto")
                         }}
                       >
                         Summarize Crypto
@@ -439,10 +439,22 @@ export default function App() {
                         color={"black"}
                         bg="gold"
                         onClick={() => {
-                          fetchLLMStreamSummary("stock")
+                          fetchLLMStreamSummary("llm-summary?type=stock")
                         }}
                       >
                         Summarize Stocks
+                      </Button>
+                      <Button
+                        mt={4}
+                        marginLeft={4}
+                        colorScheme="gold"
+                        color={"black"}
+                        bg="gold"
+                        onClick={() => {
+                          fetchLLMStreamSummary("llm-trend")
+                        }}
+                      >
+                        Explore Trends
                       </Button>
                       <Box mt={4} mb={6} p={4} bg="gray" rounded="md">
                         <Heading as="h3" size="sm" mb={2} color="gold">

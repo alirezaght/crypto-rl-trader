@@ -5,6 +5,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 from config_manager.config import get_config
 from db.firestore import init_firebase
+from routes.trends.actions.trend import TrendAction
 load_dotenv()
 
 
@@ -46,6 +47,8 @@ def main():
 
 if __name__ == "__main__":   
     init_firebase()
-    main()
+    TrendAction().get_trends()
+    # main()
+    
 
 
