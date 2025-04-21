@@ -3,6 +3,7 @@ import requests
 from utils.secret_manager import get_cryptopanic_key
 from newspaper import Article
 from utils.redis_cache import redis_cache
+import random
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36",
@@ -54,7 +55,7 @@ def fetch_rss(feed_url, source_name, items):
         return []
     feed = feedparser.parse(response.content)
     articles = []
-    for entry in feed.entries[:items]: 
+    for entry in feed.entries[:]: 
         articles.append({
             "source": source_name,
             "title": entry.title,
@@ -62,21 +63,21 @@ def fetch_rss(feed_url, source_name, items):
             "published": entry.published,
             "content": extract_article_text(entry.link)[1] if entry.link else None,
         })
-    return articles
+    return random.sample(articles, k=items)
 
 @redis_cache(ttl=3600 * 4)
 def fetch_cryptopanic(items):
     response = requests.get(CRYPTOPANIC_URL)
     data = response.json()
     articles = []
-    for item in data.get("results", [])[:items]:
+    for item in data.get("results", [])[:]:
         articles.append({
             "source": "CryptoPanic",
             "title": item.get("title"),
             "link": item.get("url"),
             "published": item.get("published_at"),            
         })
-    return articles
+    return random.sample(articles, k=items)
 
 def get_all_crypto_news():
     all_news = []

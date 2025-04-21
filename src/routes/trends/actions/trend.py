@@ -4,6 +4,7 @@ import praw
 from utils.secret_manager import get_secret
 from datetime import datetime
 from utils.redis_cache import redis_cache
+import random
 
 _reddit = None
 def get_reddit():
@@ -22,7 +23,7 @@ def get_reddit():
 @redis_cache(ttl=3600 * 4)
 def fetch_trends(subreddit: str, limit=10):
     data = []
-    for submission in get_reddit().subreddit(subreddit).hot(limit=limit):
+    for submission in get_reddit().subreddit(subreddit).hot(limit=10):
         data.append({
             "subreddit": subreddit,
             "title": submission.title,
@@ -32,7 +33,7 @@ def fetch_trends(subreddit: str, limit=10):
             "url": submission.url,
             "published": datetime.utcfromtimestamp(submission.created_utc).isoformat()
         })
-    return data
+    return random.sample(data, k=limit)
 
 class TrendAction(BaseActionProtected):
     def __init__(self):
