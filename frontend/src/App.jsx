@@ -98,6 +98,7 @@ export default function App() {
   const toast = useToast()
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   const [configLoading, setConfigLoading] = useState(true)
+  const [abortController, setAbortController] = useState(null)
 
   useEffect(() => {
     let intervalId;
@@ -171,26 +172,36 @@ export default function App() {
 
   const fetchLLMStreamSummary = async (url) => {
     if (!user) return
+  
+    if (abortController) {
+      abortController.abort()
+    }
+  
+    const controller = new AbortController()
+    setAbortController(controller)
+  
     setLlmText('')
     setStreaming(true)
     setLLMPage(true)
-
+  
     try {
       const token = await user.getIdToken()
       const res = await fetch(`${appUrl}/${url}`, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
+        signal: controller.signal,
       })
-
+  
       if (!res.ok) throw new Error("Failed to stream LLM response.")
-
+  
       const reader = res.body.getReader()
       const decoder = new TextDecoder("utf-8")
-
+  
       let done = false
       while (!done) {
         const { value, done: doneReading } = await reader.read()
         done = doneReading
         const chunk = decoder.decode(value || new Uint8Array(), { stream: !done })
+  
         if (chunk) {
           setStreaming(false)
           if (chunk.includes("<thinking>") && chunk.includes("</thinking>")) {
@@ -204,9 +215,14 @@ export default function App() {
         }
       }
     } catch (err) {
-      toast({ title: "LLM Error", description: err.message, status: "error" })
+      if (err.name === 'AbortError') {
+        console.log("Previous request aborted.")
+      } else {
+        toast({ title: "LLM Error", description: err.message, status: "error" })
+      }
+    } finally {
+      setAbortController(null)
     }
-
   }
 
   const fetchLLMStream = async (symbol) => {
