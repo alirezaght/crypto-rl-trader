@@ -137,7 +137,7 @@ class BaseLLM(BaseActionProtected):
             technical_snapshot["1d"] = None
         
         try:
-            df = fetch_data(symbol=symbol, interval="1d", start_date=clamp_to_hour(dt_from), end_date=clamp_to_hour(dt_to - datetime.timedelta(days=7)))
+            df = fetch_data(symbol=symbol, interval="1w", start_date=clamp_to_hour(dt_from), end_date=clamp_to_hour(dt_to))
             df_with_indicators = add_technical_indicators(df)
             latest_row = df_with_indicators.iloc[-1]
             technical_snapshot["1w"] = latest_row
