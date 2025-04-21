@@ -29,22 +29,36 @@ class BaseLLM(BaseActionProtected):
             5: "SELL - moderate chance of drop",
             6: "SELL - high chance of drop",
         }
+        latest_row_1d = technical_indicators["1d"].iloc[-1] if technical_indicators["1d"] is not None else None
+        latest_row_1w = technical_indicators["1w"].iloc[-1] if technical_indicators["1w"] is not None else None
+        
+        if technical_indicators["1d"] is not None and len(technical_indicators["1d"]) >= 2:
+            start_price = technical_indicators["1d"]["close"].iloc[0]
+            end_price = technical_indicators["1d"]["close"].iloc[-1]
+            days = (technical_indicators["1d"]["timestamp"].iloc[-1] - technical_indicators["1d"]["timestamp"].iloc[0]).days
+            price_change = ((end_price - start_price) / start_price) * 100
+            price_summary = (
+                f"{symbol} has moved from ${start_price:.2f} to ${end_price:.2f} "
+                f"over the last {days} days, a change of {price_change:.2f}%."
+            )
+        else:
+            price_summary = "Price summary unavailable due to insufficient data."
         
         technical = f"""
-    RSI: {technical_indicators["1d"]['rsi'].round(3) if technical_indicators["1d"] is not None else "No Data"}, {technical_indicators["1w"]['rsi'].round(3) if technical_indicators["1w"] is not None else "No Data"}  
-    MACD: {technical_indicators["1d"]['macd'].round(3) if technical_indicators["1d"] is not None else "No Data"}, {technical_indicators["1w"]['macd'].round(3) if technical_indicators["1w"] is not None else "No Data"}  
-    MACD Signal: {technical_indicators["1d"]['macd_signal'].round(3) if technical_indicators["1d"] is not None else "No Data"}, {technical_indicators["1w"]['macd_signal'].round(3) if technical_indicators["1w"] is not None else "No Data"}  
-    EMA 20: {technical_indicators["1d"]['ema_20'].round(3) if technical_indicators["1d"] is not None else "No Data"}, {technical_indicators["1w"]['ema_20'].round(3) if technical_indicators["1w"] is not None else "No Data"}  
-    EMA 50: {technical_indicators["1d"]['ema_50'].round(3) if technical_indicators["1d"] is not None else "No Data"}, {technical_indicators["1w"]['ema_50'].round(3) if technical_indicators["1w"] is not None else "No Data"}  
-    Stochastic K: {technical_indicators["1d"]['stoch_k'].round(3) if technical_indicators["1d"] is not None else "No Data"}, {technical_indicators["1w"]['stoch_k'].round(3) if technical_indicators["1w"] is not None else "No Data"}  
-    Stochastic D: {technical_indicators["1d"]['stoch_d'].round(3) if technical_indicators["1d"] is not None else "No Data"}, {technical_indicators["1w"]['stoch_d'].round(3) if technical_indicators["1w"] is not None else "No Data"}  
-    ROC: {technical_indicators["1d"]['roc'].round(3) if technical_indicators["1d"] is not None else "No Data"}, {technical_indicators["1w"]['roc'].round(3) if technical_indicators["1w"] is not None else "No Data"}  
-    ADX: {technical_indicators["1d"]['adx'].round(3) if technical_indicators["1d"] is not None else "No Data"}, {technical_indicators["1w"]['adx'].round(3) if technical_indicators["1w"] is not None else "No Data"}  
-    Bollinger MA: {technical_indicators["1d"]['bollinger_mavg'].round(3) if technical_indicators["1d"] is not None else "No Data"}, {technical_indicators["1w"]['bollinger_mavg'].round(3) if technical_indicators["1w"] is not None else "No Data"}  
-    Bollinger Upper: {technical_indicators["1d"]['bollinger_hband'].round(3) if technical_indicators["1d"] is not None else "No Data"}, {technical_indicators["1w"]['bollinger_hband'].round(3) if technical_indicators["1w"] is not None else "No Data"}  
-    Bollinger Lower: {technical_indicators["1d"]['bollinger_lband'].round(3) if technical_indicators["1d"] is not None else "No Data"}, {technical_indicators["1w"]['bollinger_lband'].round(3) if technical_indicators["1w"] is not None else "No Data"}  
-    ATR: {technical_indicators["1d"]['atr'].round(3) if technical_indicators["1d"] is not None else "No Data"}, {technical_indicators["1w"]['atr'].round(3) if technical_indicators["1w"] is not None else "No Data"}  
-    OBV: {technical_indicators["1d"]['obv'].round(3) if technical_indicators["1d"] is not None else "No Data"}, {technical_indicators["1w"]['obv'].round(3) if technical_indicators["1w"] is not None else "No Data"}
+    RSI: {latest_row_1d['rsi'].round(3) if latest_row_1d is not None else "No Data"}, {latest_row_1w['rsi'].round(3) if latest_row_1w is not None else "No Data"}  
+    MACD: {latest_row_1d['macd'].round(3) if latest_row_1d is not None else "No Data"}, {latest_row_1w['macd'].round(3) if latest_row_1w is not None else "No Data"}  
+    MACD Signal: {latest_row_1d['macd_signal'].round(3) if latest_row_1d is not None else "No Data"}, {latest_row_1w['macd_signal'].round(3) if latest_row_1w is not None else "No Data"}  
+    EMA 20: {latest_row_1d['ema_20'].round(3) if latest_row_1d is not None else "No Data"}, {latest_row_1w['ema_20'].round(3) if latest_row_1w is not None else "No Data"}  
+    EMA 50: {latest_row_1d['ema_50'].round(3) if latest_row_1d is not None else "No Data"}, {latest_row_1w['ema_50'].round(3) if latest_row_1w is not None else "No Data"}  
+    Stochastic K: {latest_row_1d['stoch_k'].round(3) if latest_row_1d is not None else "No Data"}, {latest_row_1w['stoch_k'].round(3) if latest_row_1w is not None else "No Data"}  
+    Stochastic D: {latest_row_1d['stoch_d'].round(3) if latest_row_1d is not None else "No Data"}, {latest_row_1w['stoch_d'].round(3) if latest_row_1w is not None else "No Data"}  
+    ROC: {latest_row_1d['roc'].round(3) if latest_row_1d is not None else "No Data"}, {latest_row_1w['roc'].round(3) if latest_row_1w is not None else "No Data"}  
+    ADX: {latest_row_1d['adx'].round(3) if latest_row_1d is not None else "No Data"}, {latest_row_1w['adx'].round(3) if latest_row_1w is not None else "No Data"}  
+    Bollinger MA: {latest_row_1d['bollinger_mavg'].round(3) if latest_row_1d is not None else "No Data"}, {latest_row_1w['bollinger_mavg'].round(3) if latest_row_1w is not None else "No Data"}  
+    Bollinger Upper: {latest_row_1d['bollinger_hband'].round(3) if latest_row_1d is not None else "No Data"}, {latest_row_1w['bollinger_hband'].round(3) if latest_row_1w is not None else "No Data"}  
+    Bollinger Lower: {latest_row_1d['bollinger_lband'].round(3) if latest_row_1d is not None else "No Data"}, {latest_row_1w['bollinger_lband'].round(3) if latest_row_1w is not None else "No Data"}  
+    ATR: {latest_row_1d['atr'].round(3) if latest_row_1d is not None else "No Data"}, {latest_row_1w['atr'].round(3) if latest_row_1w is not None else "No Data"}  
+    OBV: {latest_row_1d['obv'].round(3) if latest_row_1d is not None else "No Data"}, {latest_row_1w['obv'].round(3) if latest_row_1w is not None else "No Data"}
         """
         news = ""
         for article in news_articles:
@@ -53,12 +67,14 @@ class BaseLLM(BaseActionProtected):
                 news += f"  {article['content'][:300]}...\n"
         
         
+
         prompt = self.prompt_template.compile(
             SYMBOL=symbol,
             RLRESULT=action_descriptions[rl_action.action],
             CONFIDENCE=rl_action.confidence,
             TECHNICAL=technical,
             NEWS=news,
+            PRICESUMMARY=price_summary,
         )
         
         return prompt.strip()
@@ -131,17 +147,15 @@ class BaseLLM(BaseActionProtected):
         technical_snapshot = {}
         try:
             df = fetch_data(symbol=symbol, interval="1d", start_date=clamp_to_hour(dt_from), end_date=clamp_to_hour(dt_to))
-            df_with_indicators = add_technical_indicators(df)
-            latest_row = df_with_indicators.iloc[-1]
-            technical_snapshot["1d"] = latest_row
+            df_with_indicators = add_technical_indicators(df)            
+            technical_snapshot["1d"] = df_with_indicators
         except Exception as e:
             technical_snapshot["1d"] = None
         
         try:
             df = fetch_data(symbol=symbol, interval="1w" if crypto else "1wk", start_date=clamp_to_hour(dt_from), end_date=clamp_to_hour(dt_to))
-            df_with_indicators = add_technical_indicators(df)
-            latest_row = df_with_indicators.iloc[-1]
-            technical_snapshot["1w"] = latest_row
+            df_with_indicators = add_technical_indicators(df)            
+            technical_snapshot["1w"] = df_with_indicators
         except Exception as e:
             technical_snapshot["1w"] = None
         

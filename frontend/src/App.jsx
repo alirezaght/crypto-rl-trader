@@ -430,7 +430,7 @@ export default function App() {
                           fetchLLMStreamSummary("crypto")
                         }}
                       >
-                        Summarize
+                        Summarize Crypto
                       </Button>
                       <Button
                         mt={4}
