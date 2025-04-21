@@ -4,6 +4,12 @@ from utils.secret_manager import get_cryptopanic_key
 from newspaper import Article
 from utils.redis_cache import redis_cache
 
+HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"
+}
+
 # RSS feed URLs
 RSS_FEEDS = {
     "Decrypt": "https://decrypt.co/feed",
@@ -18,9 +24,9 @@ RSS_FEEDS = {
 STOCK_RSS_FEEDS = {
     "CNBC": "https://www.cnbc.com/id/100003114/device/rss/rss.html",
     "MarketWatch": "https://feeds.marketwatch.com/marketwatch/topstories/",
-    "Investopedia": "https://www.investopedia.com/feedbuilder/feed/getfeed/?feedName=rss_headline",
+    "NASDAQ": "https://www.nasdaq.com/feed/rssoutbound?category=Stock%20Market%20News",
     "Yahoo Finance": "https://feeds.finance.yahoo.com/rss/2.0/headline?s=AAPL,MSFT,TSLA,GOOGL&region=US&lang=en-US",
-    "Bloomberg": "https://www.bloomberg.com/feed/podcast/etf-report.xml",
+    "Seeking Alpha": "https://seekingalpha.com/market-news/all.xml",
 }
 
 CRYPTOPANIC_API_KEY = get_cryptopanic_key().strip()
@@ -32,7 +38,7 @@ def extract_article_text(url):
         article = Article(url)
         article.download(input_html=requests.get(
             url,
-            headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36"}
+            headers=HEADERS
         ).text)
         article.parse()
         return article.title, article.text
@@ -40,9 +46,9 @@ def extract_article_text(url):
         print(f"Failed to extract article: {e}")
         return None, None
 
-@redis_cache(ttl=3600 * 4)  
+# @redis_cache(ttl=3600 * 4)  
 def fetch_rss(feed_url, source_name, items):
-    response = requests.get(feed_url, allow_redirects=True)
+    response = requests.get(feed_url, headers=HEADERS, allow_redirects=True)
     if response.status_code != 200:
         print(f"Failed to fetch RSS from {source_name} - Status {response.status_code}")
         return []
