@@ -46,7 +46,7 @@ def extract_article_text(url):
         print(f"Failed to extract article: {e}")
         return None, None
 
-# @redis_cache(ttl=3600 * 4)  
+@redis_cache(ttl=3600 * 4)  
 def fetch_rss(feed_url, source_name, items):
     response = requests.get(feed_url, headers=HEADERS, allow_redirects=True)
     if response.status_code != 200:
