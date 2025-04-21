@@ -38,7 +38,7 @@ class BaseLLM(BaseActionProtected):
             days = (technical_indicators["1d"]["timestamp"].iloc[-1] - technical_indicators["1d"]["timestamp"].iloc[0]).days
             price_change = ((end_price - start_price) / start_price) * 100
             price_summary = (
-                f"{symbol} has moved from ${start_price:.2f} to ${end_price:.2f} "
+                f"{symbol} has moved from {start_price:.2f} to {end_price:.2f} "
                 f"over the last {days} days, a change of {price_change:.2f}%."
             )
         else:
