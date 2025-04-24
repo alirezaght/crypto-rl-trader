@@ -17,7 +17,7 @@ class BaseLLM(BaseActionProtected):
         
     
     
-    def query(self, system_prompt: str, user_prompt: str):
+    def query(self, system_prompt: str, user_prompt: str, stream: bool = True):
         trace = get_langfuse().trace(name=f"{self.langfuse_prompt}-trace")
         messages = [
                 {"role": "system", "content": system_prompt},
@@ -32,22 +32,28 @@ class BaseLLM(BaseActionProtected):
                 {"role": "user", "content": user_prompt}
             ],
         )
-        stream = self.client.chat.completions.create(
+        response = self.client.chat.completions.create(
             model=self.model,
             messages=messages,
-            stream=True
+            stream=stream
         )
         full_response = ""
         usage = None
-        yield "\n\n"
-        for chunk in stream:
-            chunk: ChatCompletionChunk
-            if chunk.choices and chunk.choices[0].delta.content:            
-                if chunk.usage:
-                    usage = chunk.usage
-                content_chunk = chunk.choices[0].delta.content
-                full_response += content_chunk            
-                yield content_chunk
+        if stream:
+            yield "\n\n"
+            for chunk in response:
+                chunk: ChatCompletionChunk
+                if chunk.choices and chunk.choices[0].delta.content:            
+                    if chunk.usage:
+                        usage = chunk.usage
+                    content_chunk = chunk.choices[0].delta.content
+                    full_response += content_chunk            
+                    yield content_chunk
+        else:
+            full_response = response.choices[0].message.content
+            if response.usage:
+                usage = response.usage
+            
                 
         generation.end(
             output=full_response,
@@ -55,7 +61,8 @@ class BaseLLM(BaseActionProtected):
         )
 
         trace.update()
-            
+        if not stream:
+            return full_response
             
         
             

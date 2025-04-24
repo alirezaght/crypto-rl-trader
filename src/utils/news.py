@@ -54,8 +54,9 @@ def fetch_rss(feed_url, source_name, items):
         print(f"Failed to fetch RSS from {source_name} - Status {response.status_code}")
         return []
     feed = feedparser.parse(response.content)
+    feed_entries = random.sample(feed.entries[:], k=items)
     articles = []
-    for entry in feed.entries[:]: 
+    for entry in feed_entries: 
         articles.append({
             "source": source_name,
             "title": entry.title,
@@ -63,21 +64,22 @@ def fetch_rss(feed_url, source_name, items):
             "published": entry.published,
             "content": extract_article_text(entry.link)[1] if entry.link else None,
         })
-    return random.sample(articles, k=items)
+    return articles
 
 @redis_cache(ttl=3600 * 4)
 def fetch_cryptopanic(items):
     response = requests.get(CRYPTOPANIC_URL)
     data = response.json()
+    results = random.sample(data.get("results", [])[:], k=items)
     articles = []
-    for item in data.get("results", [])[:]:
+    for item in results:
         articles.append({
             "source": "CryptoPanic",
             "title": item.get("title"),
             "link": item.get("url"),
             "published": item.get("published_at"),            
         })
-    return random.sample(articles, k=items)
+    return articles
 
 def get_all_crypto_news():
     all_news = []
