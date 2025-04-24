@@ -17,6 +17,7 @@ import {
   IconButton,
   Flex,
   Spinner,
+  Stack,
 } from '@chakra-ui/react'
 import { FaGoogle } from 'react-icons/fa'
 import logo from './assets/logo.png'
@@ -437,6 +438,7 @@ export default function App() {
 
                   {!llmPage && (
                     <>
+                    <Stack spacing={4} direction="column" mt={4} align="flex-start">
                       <Button
                         mt={4}
                         colorScheme="gold"
@@ -449,8 +451,7 @@ export default function App() {
                         Summarize Crypto
                       </Button>
                       <Button
-                        mt={4}
-                        marginLeft={4}
+                        mt={4}                        
                         colorScheme="gold"
                         color={"black"}
                         bg="gold"
@@ -461,8 +462,7 @@ export default function App() {
                         Summarize Stocks
                       </Button>
                       <Button
-                        mt={4}
-                        marginLeft={4}
+                        mt={4}                        
                         colorScheme="gold"
                         color={"black"}
                         bg="gold"
@@ -472,6 +472,7 @@ export default function App() {
                       >
                         Explore Trends
                       </Button>
+                      </Stack>
                       <Box mt={4} mb={6} p={4} bg="gray" rounded="md">
                         <Heading as="h3" size="sm" mb={2} color="gold">
                           Can't find your favorite pair?
