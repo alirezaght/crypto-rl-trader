@@ -28,6 +28,7 @@ def get_redis_client():
         _cache_available = False
     return _redis_client
 
+
 def redis_cache(ttl=3600):  # TTL = 1 hour
     def decorator(func):
         def wrapper(*args, **kwargs):
