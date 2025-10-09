@@ -14,8 +14,8 @@ def get_redis_client():
         if _redis_client is None:
             redis_key = get_redis_key().strip()
             _redis_client = redis.Redis(
-                host='redis-19611.c327.europe-west1-2.gce.redns.redis-cloud.com',
-                port=19611,
+                host='redis-13115.c114.us-east-1-4.ec2.redns.redis-cloud.com',
+                port=13115,
                 decode_responses=False,
                 username="default",
                 password=redis_key,
