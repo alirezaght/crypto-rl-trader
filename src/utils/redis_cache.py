@@ -8,6 +8,7 @@ _cache_available = True
 
 def get_redis_client():
     global _redis_client
+    global _cache_available
     if _cache_available is False:
         return None
     try:
@@ -30,6 +31,7 @@ def get_redis_client():
 
 
 def redis_cache(ttl=3600):  # TTL = 1 hour
+    global _cache_available
     def decorator(func):
         def wrapper(*args, **kwargs):
             if _cache_available:
