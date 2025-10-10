@@ -11,8 +11,8 @@ class LLMAction(BaseActionProtected):
     
     def __init__(self):
         super().__init__()
-        self.crypto_llm = PredictLLM(model="llama3-70b-8192", langfuse_prompt="crypto")
-        self.stock_llm = PredictLLM(model="llama3-70b-8192", langfuse_prompt="stock")
+        self.crypto_llm = PredictLLM(model="llama-3.3-70b-versatile", langfuse_prompt="crypto")
+        self.stock_llm = PredictLLM(model="llama-3.3-70b-versatile", langfuse_prompt="stock")
         
     
     def query_for_one_symbol(self, symbol):

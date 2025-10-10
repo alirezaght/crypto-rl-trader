@@ -7,7 +7,7 @@ from .action import BaseActionProtected
 
 
 class BaseLLM(BaseActionProtected):
-    def __init__(self, model: str = "llama3-70b-8192", langfuse_prompt: str = "crypto"):
+    def __init__(self, model: str = "llama-3.3-70b-versatile", langfuse_prompt: str = "crypto"):
         super().__init__()        
         self.client = Groq(api_key=get_groq_key().strip())
         self.model = model
