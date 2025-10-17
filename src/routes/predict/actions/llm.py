@@ -9,6 +9,7 @@ import random
 
 class LLMAction(BaseActionProtected):
     
+    
     def __init__(self):
         super().__init__()
         self.crypto_llm = PredictLLM(model="llama-3.3-70b-versatile", langfuse_prompt="crypto")
